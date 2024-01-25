@@ -9,6 +9,6 @@ ORCA (Operational Resilient Computing Asset) is a Opensource portable multitool/
 - EEPROM
 - Expansion/periferal ports (including STEMMA QT)
 - SX1278 Radio
-- Micro SDcard Slot
+- Micro SD card slot
 
 
