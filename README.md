@@ -5,10 +5,12 @@ ORCA (Operational Resilient Computing Asset) is a Opensource portable multitool/
 # Hardware Features
 - WIFI & Bluetooh (ESP32 S3)
 - QWERTY keyboard
-- I2S Microphone
 - EEPROM
 - Expansion/periferal ports (including STEMMA QT)
 - SX1278 Radio
 - Micro SD card slot
 
+# ORCA V1
+First version of the PCB had a lot of mistakes, I'm working on a V2, do not recomend using it at all. I'm currently developing the firmware on a modded version of the device.
 
+<img src='./Photos/ORCA V1.png' width='1000'>\
