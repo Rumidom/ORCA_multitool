@@ -9,6 +9,7 @@ ORCA (Operational Resilient Computing Asset) is a Opensource portable multitool/
 - Expansion/periferal ports (including STEMMA QT)
 - SX1278 Radio
 - Micro SD card slot
+- real-time clock IC
 
 ## ORCA V1
 First version of the PCB had a lot of mistakes, I'm working on a V2, do not recomend using V1 at all. I'm currently developing the firmware on a modded version of the device.
@@ -17,7 +18,11 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 <img src='./Photos/ORCA V1.png' width='600'>
 </p>
 
-
+## Design Goals
+- Nice easy to use UI
+- Low power
+- All tools should be able to save/read plaintext/encrypted files on the SD card/Flash
+  
 ## TODO
 - Device Info
 - [x] Displays available/used Ram, available/used Flash, available/used SD Card space, Device MAC Address
@@ -27,7 +32,7 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - NotePad
 - [ ] Create, Load, Edit files on the SDCard/Flash
 - LORA Tools
-- [ ] LORA Monitor (Recive and display recieved lora packets)
+- [ ] LORA Monitor (Recieve and display recieved lora packets)
 - [ ] LORA Sender (Sends lora packets)
 - [ ] LORA Menssager (Sends and Recives Encrypted Messages, On a Chatapp-like UI)
 - I2C Tools
@@ -36,6 +41,7 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - [ ] I2C Sender (Sends packets over the I2C bus)
 - [ ] I2C Screen Tester (Tests commonly available screens)
 - Serial Tools
+- [ ] Serial Monitor
 - WIFI Tools
 - ESP-now Tools
 - Bluetooth Tools
