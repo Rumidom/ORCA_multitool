@@ -11,9 +11,11 @@ ORCA (Operational Resilient Computing Asset) is a Opensource portable multitool/
 - Micro SD card slot
 
 ## ORCA V1
-First version of the PCB had a lot of mistakes, I'm working on a V2, do not recomend using it at all. I'm currently developing the firmware on a modded version of the device.
+First version of the PCB had a lot of mistakes, I'm working on a V2, do not recomend using V1 at all. I'm currently developing the firmware on a modded version of the device.
 
+<p align="center">
 <img src='./Photos/ORCA V1.png' width='600'>
+</p>
 
 
 ## TODO
