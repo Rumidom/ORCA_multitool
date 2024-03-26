@@ -1,31 +1,28 @@
 import framebuf,time,math,random,gc,utime,network
 import pcd8544,fontlib
-from machine import Pin,SPI,SoftSPI,I2S,I2C,UART
+from machine import Pin,SPI,SoftSPI,I2S,I2C,UART,SDCard
 from sx127x import SX127x
-import Cryptography
-
-bck_pin = Pin(14)  # Bit clock output
-ws_pin = Pin(15)   # Word clock output
-sdin_pin = Pin(16) # Serial data input
-
-audio_in = I2S(0,
-               sck=bck_pin, ws=ws_pin, sd=sdin_pin,
-               mode=I2S.RX,
-               bits=16,
-               format=I2S.MONO,
-               rate=16000,
-               ibuf=16000)
-
-
+import Cryptography,Popups,Notepad,Config
+import Buttons
 
 spi  = SPI(2, sck=Pin(13), mosi=Pin(11), miso=Pin(12))
 spi.init(baudrate=4000000, polarity=0, phase=0)
+
+sd = SDCard(slot=3, width=1,
+         sck=Pin(39, pull=Pin.PULL_UP),
+         miso=Pin(21, pull=Pin.PULL_UP),
+         mosi=Pin(42, pull=Pin.PULL_UP),
+         cs=Pin(15, pull=Pin.PULL_UP),
+         cd=None,
+         wp=None,
+         freq=2000000,
+)
+
 lora_pins = {
     'dio_0':6,
     'ss':5,
     'reset':7,
 }
-
 
 uart1 = UART(1, baudrate=9600, tx=17, rx=18)
 
@@ -50,9 +47,9 @@ def DrawMenu(MenuOptions,SelectedIndex,maxrows = 7):
         
     for i,item in enumerate(MenuOptions[menupos:maxrows+menupos]):
         if i == SelectedIndex:
-            fontlib.printstring(item,5,i*7,0,lcd.fbuf,font = "five",invert = True)
+            fontlib.printstring(item,3,i*7,0,lcd.fbuf,font = "five",invert = True)
         else:
-            fontlib.printstring(item,5,i*7,0,lcd.fbuf,font = "five")
+            fontlib.printstring(item,3,i*7,0,lcd.fbuf,font = "five")
     lcd.show()
     
 
@@ -65,14 +62,14 @@ def RunMenu(MenuOptions):
             if w == b'\xab': #>>
                 if selected_index < (MenuLen-1):
                     selected_index += 1
-            if w == b'\xa0': #ok
+            if w == b'\n': #Ok/Enter
                 return(MenuOptions[selected_index])
             if w == b'\xbb': #<<
                 if selected_index > 0:
                     selected_index -= 1
-            if w == b'\xa1': #DEL
+            if w == b'\x7f': #DEL
                 return("DELETE")
-            if w == b'\x9b': #ESC
+            if w == b'\x1b': #ESC
                 return("ESCAPE")
         DrawMenu(MenuOptions,selected_index)
 
@@ -128,15 +125,22 @@ uart1.init()
 #time.sleep(2)
 
 
-MainMenuOptions = ["Serial Tools","I2C Tools","LORA Tools","NotePad","Cryptography","Device Config","Device Info"]
+MainMenuOptions = ["Serial Tools","I2C Tools","LORA Tools","Bluetooth Tools","ESP-now","NotePad","Cryptography","Device Config","Device Info"]
 Serialtools = ["Serial Monitor","Serial Config"]
 I2Ctools = ["I2C Scanner","I2C Screen Tester"]
 LoratoolsOptions = ["LORA Monitor","LORA Mensager"]
-NotePadOptions = ["New File","Open File","Notepad Config"]
-CryptographyOptions = ["Key Viewer","Export Keyfile","Import Keyfile"]
+NotePadOptions = ["New File","Open File"]
+CryptographyOptions = ["Key Viewer","Export Keyfile","Import Keyfile","Erase All Keys"]
 
-Cryptography.RunKeyViewer(lcd,uart1)
-'''
+#Popups.Progress(lcd,0.1,line1="this is line 1",line2="this is line 2")
+#Popups.Question(lcd,1,line1="Are you sure?",line2="key will be lost",Button1="Cancel",Button2=" Yep ")
+#Popups.TextInput(lcd,uart1,line1=None,line2="Enter File Name:")
+#Notepad.RunNotePad(lcd,uart1,"testfile.txt")
+#Config.ConfigOptions
+
+
+#lcd.show()
+
 while True:
     MainMenuSelected = RunMenu(MainMenuOptions)
     if (MainMenuSelected == "Serial Tools"):
@@ -147,8 +151,16 @@ while True:
         pass
     if (MainMenuSelected == "NotePad"):
         NotePadSelected = RunMenu(NotePadOptions)
+        if (NotePadSelected == "New File"):
+            Notepad.RunNotePad(lcd,uart1,FilePath = None)
+        if (NotePadSelected == "Open File"):
+            pass
     if (MainMenuSelected == "Cryptography"):
         CryptographySelected = RunMenu(CryptographyOptions)
+        if CryptographySelected == "Key Viewer":
+            Cryptography.RunKeyViewer(lcd,uart1)
     if (MainMenuSelected == "Device Info"):
         DisplayDeviceInfo()
-'''
+    if (MainMenuSelected == "Device Config"):
+        Config.RunDeviceConfig(lcd,uart1)
+        
