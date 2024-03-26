@@ -22,14 +22,14 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - Device Info
 - [x] Displays available/used Ram, available/used Flash, available/used SD Card space, Device MAC Address
 - Cryptograpfy
-- [x] View,Generate,Delete 32 Byte keys on the EEPROM
+- [x] View, Generate, Delete 32 Byte AES keys on the EEPROM
 - [x] AES File Encryption/Decryption using EEPROM keys
 - NotePad
 - [ ] Create, Load, Edit files on the SDCard/Flash
 - LORA Tools
 - [ ] LORA Monitor (Recive and display recieved lora packets)
 - [ ] LORA Sender (Sends lora packets)
-- [ ] LORA Menssager (Sends and Recives Encrypted Messages, On a Chatapp-like )
+- [ ] LORA Menssager (Sends and Recives Encrypted Messages, On a Chatapp-like UI)
 - I2C Tools
 - [ ] I2C Scanner
 - [ ] I2C Monitor (Recive and display I2C data)
