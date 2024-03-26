@@ -25,7 +25,7 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - [x] View,Generate,Delete 32 Byte keys on the EEPROM
 - [x] AES File Encryption/Decryption using EEPROM keys
 - NotePad
-- [ ] Create,Load,Edit files on the SDCard/Flash
+- [ ] Create, Load, Edit files on the SDCard/Flash
 - LORA Tools
 - [ ] LORA Monitor (Recive and display recieved lora packets)
 - [ ] LORA Sender (Sends lora packets)
