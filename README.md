@@ -54,7 +54,10 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - ESP-now Tools
 - IR Tools
 - Bluetooth Tools
-
+- Games
+- [ ] Space invaders
+- [ ] Lunar Lander
+      
 ## Donating:
 Help me pay for prototyping costs by becoming a sponsor or using the referal link on the BOM list
 
