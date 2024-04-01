@@ -17,6 +17,9 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 <p align="center">
 <img src='./Photos/ORCA V1.png' width='600'>
 </p>
+## BOM List:
+[ESP32 S3 N16R8](https://s.click.aliexpress.com/e/_DD4kUg9)
+[SX1278 LORA radio](https://s.click.aliexpress.com/e/_DDBJqpf)
 
 ## Design Goals
 - Nice easy to use UI
@@ -51,5 +54,7 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - IR Tools
 - Bluetooth Tools
 
-## Help the project:
-Help 
+## Donating:
+Help me pay for prototyping costs by becoming a sponsor or using the referal link on the BOM list
+
+
