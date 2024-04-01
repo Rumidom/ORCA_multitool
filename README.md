@@ -30,11 +30,14 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - [x] View, Generate, Delete 32 Byte AES keys on the EEPROM
 - [x] AES File Encryption/Decryption using EEPROM keys
 - NotePad
-- [ ] Create, Load, Edit files on the SDCard/Flash
+- [x] Create, Load, Edit files on the SDCard/Flash
 - LORA Tools
-- [ ] LORA Monitor (Recieve and display recieved lora packets)
+- [x] LORA Monitor (Recieve,Display and Save recieved lora packets)
 - [ ] LORA Sender (Sends lora packets)
 - [ ] LORA Menssager (Sends and Recives Encrypted Messages, On a Chatapp-like UI)
+- OOK/FSK/ASK Tools
+- [ ] LORA Monitor (Recieve,Display and Save recieved OOK/FSK/ASK packets)
+- [ ] LORA Sender (Sends OOK/FSK/ASK packets)
 - I2C Tools
 - [ ] I2C Scanner
 - [ ] I2C Monitor (Recive and display I2C data)
@@ -43,6 +46,10 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - Serial Tools
 - [ ] Serial Monitor
 - WIFI Tools
+- [ ] SSID Scanner/Signal Strength Meter
 - ESP-now Tools
+- IR Tools
 - Bluetooth Tools
-  
+
+## Help the project:
+Help 
