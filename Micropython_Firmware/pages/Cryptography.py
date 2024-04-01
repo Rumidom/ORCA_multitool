@@ -4,11 +4,34 @@ from eeprom_i2c import EEPROM, T24C256
 import fontlib
 import Popups,Buttons
 import ucryptolib
+from Control import UserControl
 
-i2c = I2C(1,scl=Pin(9), sda=Pin(8),freq=400000)
+def Geteep(lcd,i2c):
+    eep = None
+    try:
+        eep = EEPROM(i2c, T24C256)
+    except Exception as e:
+        Popups.Splash(lcd,[str(e)])
+    return eep
 
-def AutoGenerateKeyOnEmptySlot():
-    eep = EEPROM(i2c, T24C256)
+def Generatekey(seed=None):
+    # could use os.urandom(32)
+    random.seed(seed)
+    key = b''
+    for i in range(16):
+        key += random.getrandbits(32).to_bytes(2,'big')
+    return key
+
+def SaveKeyToEEPROM(lcd,key,slot_index,eep):
+    eep[slot_index*32:(slot_index+1)*32] = key
+
+def GetKeyFromEEPROM(lcd,slot_index,eep):
+    return eep[slot_index*32:(slot_index+1)*32]
+
+def EraseKey(lcd,slot_index,eep):
+    SaveKeyToEEPROM(lcd,b'\x00'*32,slot_index,eep)
+
+def AutoGenerateKeyOnEmptySlot(lcd,eep):
     keyslot = None
     key = None
     for pag in range(128):# 128 pages total
@@ -17,36 +40,15 @@ def AutoGenerateKeyOnEmptySlot():
             slotdata = pagdata[i_slot*32:(i_slot+1)*32]
             if ((slotdata == b'\x00'*32) or (slotdata == b'\xFF'*32)):
                 keyslot = i_slot+pag*8
-                SaveKeyToEEPROM(Generatekey(),keyslot,eep=eep)
-                key = GetKeyFromEEPROM(keyslot,eep = eep)
+                SaveKeyToEEPROM(lcd,Generatekey(),keyslot,eep)
+                key = GetKeyFromEEPROM(lcd,keyslot,eep)
                 break
         if key != None:
             break
     return (key,keyslot)
 
-def Generatekey(seed=None):
-    random.seed(seed)
-    key = b''
-    for i in range(16):
-        key += random.getrandbits(32).to_bytes(2,'big')
-    return key
-
-def SaveKeyToEEPROM(key,slot_index,eep=None):
-    if not eep:
-        eep = EEPROM(i2c, T24C256)
-    eep[slot_index*32:(slot_index+1)*32] = key
-
-def GetKeyFromEEPROM(slot_index,eep=None):
-    if not eep:
-        eep = EEPROM(i2c, T24C256)
-    return eep[slot_index*32:(slot_index+1)*32]
-
-def EraseKey(slot_index):
-    SaveKeyToEEPROM(b'\x00'*32,slot_index)
-    
-def EraseEEPROM(lcd):
+def EraseEEPROM(lcd,eep):
     print("Erasing EEPROM")
-    eep = EEPROM(i2c, T24C256)
     pagesize = 64
     pages = len(eep)/pagesize
     for i in range(pages):
@@ -55,120 +57,6 @@ def EraseEEPROM(lcd):
         fontlib.printstring('{:.2f} %'.format(((i+1)/pages)*100),25,25,0,lcd.fbuf)
         eep[i*pagesize:(i+1)*pagesize] = b'\x00'*pagesize
         lcd.show()
-
-def DrawKeySlot(lcd,posx,posy,selected = False,empty = True,slot=4):
-    lcd.rect(posx, posy, 33, 11, 1)
-    lcd.line(posx+6, posy, posx+6, posy+10, 1)
-    if not empty:
-        fontlib.printchar("+",posx+1,posy+2,lcd.fbuf,font = "icons",invert = False)
-    fontlib.printstring(f'{slot:04}',posx+8,posy+3,1,lcd.fbuf,invert = selected)
-    lcd.line(posx+7, posy+1, posx+8+23, posy+1, 1)
-    lcd.line(posx+7, posy+9, posx+8+23, posy+9, 1)
-
-
-def DrawKeyWindow(lcd,keydata,indexpos,keyslot,buttonNames):
-    lcd.fill(0)
-    hexdata = keydata.hex()
-    NamePairs = []
-    for i in range(0,len(buttonNames),2):
-        NamePairs.append((buttonNames[i],buttonNames[i+1]))
-    for i in range(7):
-        for j in range(5):
-            bindex = (i+7*j)
-            if bindex < 32:
-                fontlib.printstring(hexdata[bindex*2:bindex*2+2],i*12+1,j*7,0,lcd.fbuf)
-
-    for i in range(2):
-        pair_choice = (indexpos//2)
-        Buttons.DrawButton(lcd,6+37*i,36,NamePairs[pair_choice][i],selected = (indexpos ==  pair_choice*2+i))
-    
-    if indexpos < 2:
-        fontlib.printstring("?",(42+38),37,0,lcd.fbuf,font="icons")
-    else:
-        fontlib.printstring(";",0,37,0,lcd.fbuf,font="icons")
-
-    lcd.show()
-    
-def DrawKeyViwer(lcd,pag,pagdata,Selectedindex):
-    lcd.fill(0)
-    for j in range(2):
-        for i in range(4):
-            empty_slot = True
-            selected_slot = False
-            slot_index = (i+4*j)
-            slotdata = pagdata[slot_index*32:(slot_index+1)*32]
-            if ((slotdata != b'\x00'*32) and (slotdata != b'\xFF'*32)):
-                empty_slot = False
-            if (slot_index == Selectedindex):
-                selected_slot = True
-            DrawKeySlot(lcd,34*j,12*i,selected = selected_slot,empty = empty_slot,slot=slot_index+pag*8)
-    fontlib.printstring(f'P.',69,33,0,lcd.fbuf,invert = False)
-    fontlib.printstring(f'{pag:03}',69,39,0,lcd.fbuf,invert = False)
-    lcd.show()
-
-def RunKeyWidown(lcd,uart_,keyslot,data):
-    selected_index = 0
-    buttonNames = ["Import","Export","Random","Erase"]
-    while True:
-        if (uart_.any()>0):
-            w = uart_.read()
-            if w == b'\xab': #>>
-                if selected_index < 3:
-                    selected_index += 1
-            if w == b'\n': #ok
-                Option = buttonNames[selected_index]
-                if Option == 'Import':
-                    pass
-                if Option == 'Export':
-                    pass
-                if Option == 'Random':
-                    Q_Ans = Popups.Question(lcd,uart_,line1="Are you sure?",line2="key will be lost",Button1="Cancel",Button2=" Yep ")
-                    print(Q_Ans)
-                    if Q_Ans == ' Yep ':
-                        SaveKeyToEEPROM(Generatekey(seed=None),keyslot)
-                    data = GetKeyFromEEPROM(keyslot)
-                if Option == 'Erase':
-                    Q_Ans = Popups.Question(lcd,uart_,line1="Are you sure?",line2="key will be lost",Button1="Cancel",Button2=" Yep ")
-                    if Q_Ans == ' Yep ':
-                        EraseKey(keyslot)
-                    data = GetKeyFromEEPROM(keyslot)
-            if w == b'\xbb': #<<
-                if selected_index > 0:
-                    selected_index -= 1
-            if w == b'\x1b': #ESC
-                return('ESCAPE')
-        DrawKeyWindow(lcd,data,selected_index,keyslot,buttonNames)
-        
-def RunKeyViewer(lcd,uart_,pag = 0):
-    eep = EEPROM(i2c, T24C256)
-    data = eep[pag*256:(pag+1)*256]
-    selected_index = 0
-    DrawKeyViwer(lcd,pag,data,selected_index)
-    while True:
-        if (uart_.any()>0):
-            w = uart_.read()
-            if w == b'\xab': #>>
-                if selected_index < 7:
-                    selected_index += 1
-                else:
-                    pag += 1
-                    selected_index = 0
-                    data = eep[pag*256:(pag+1)*256]
-            if w == b'\n': #ok
-                slot_index = selected_index+pag*8
-                slotdata = data[slot_index*32:(slot_index+1)*32]
-                RunKeyWidown(lcd,uart_,slot_index,slotdata)
-                data = eep[pag*256:(pag+1)*256]
-            if w == b'\xbb': #<<
-                if selected_index > 0:
-                    selected_index -= 1
-                elif pag > 0:
-                    pag -=1
-                    selected_index = 7
-                    data = eep[pag*256:(pag+1)*256]
-            if w == b'\x1b': #ESC
-                break
-        DrawKeyViwer(lcd,pag,data,selected_index)
 
 def chunks(string, length):
     return list(string[0+i:length+i] for i in range(0, len(string), length))
@@ -198,3 +86,144 @@ def DecryptBytearray(data,Key):
 
 def DecryptBytearraytoString(data,Key):
     return DecryptBytearray(data,Key).decode().rstrip('\x00')
+
+
+class KeyWindow(UserControl):
+    def __init__(self,lcd,uart_,eep):
+        self.lcd = lcd
+        self.uart = uart_
+        self.eep = eep
+        self.keydata = None
+        self.keyslot = None
+        self.selected_index = 0
+        self.Menubuttons = ["Import","Export","Random","Erase"]
+    def Ok_Func(self):
+        Option = self.Menubuttons[self.selected_index]
+        if Option == 'Import':
+            return('Import')
+        if Option == 'Export':
+            return('Export')
+        if Option == 'Random':
+            Q_Ans = Popups.OptionChoice(self.lcd,self.uart,("Are you sure?","key will be lost"),('Yep','Cancel'))
+            #print(Q_Ans)
+            if Q_Ans == 'Yep':
+                SaveKeyToEEPROM(self.lcd,Generatekey(),self.keyslot,self.eep)
+            self.keydata = GetKeyFromEEPROM(self.lcd,self.keyslot,self.eep)
+        if Option == 'Erase':
+            Q_Ans = Popups.OptionChoice(self.lcd,self.uart,("Are you sure?","key will be lost"),('Yep','Cancel'))
+            if Q_Ans == 'Yep':
+                EraseKey(self.lcd,self.keyslot,self.eep)
+            self.keydata = GetKeyFromEEPROM(self.lcd,self.keyslot,self.eep)
+    def Left_Func(self):
+        if self.selected_index > 0:
+            self.selected_index -= 1
+            
+    def Right_Func(self):
+        if self.selected_index < 3:
+            self.selected_index += 1
+            
+    def ESC_Func(self):
+        return("ESCAPE")
+    
+    def DEL_Func(self):
+        return("DELETE")
+
+    def DrawKeyWindow(self):
+        self.lcd.fill(0)
+        hexdata = self.keydata.hex()
+        for i in range(7):
+            for j in range(5):
+                bindex = (i+7*j)
+                if bindex < 32:
+                    fontlib.printstring(hexdata[bindex*2:bindex*2+2],i*12+1,j*7,0,self.lcd.fbuf)
+        Buttons.BottomMenu(self.lcd,self.Menubuttons,self.selected_index,MenuActive = True)
+        self.lcd.show()
+        
+    def Run(self,keydata,keyslot):
+        self.keydata = keydata
+        self.keyslot = keyslot
+        while True:
+            self.DrawKeyWindow()
+            r = self.CheckKeyPress()
+            if r != None:
+                return r
+
+        
+class KeysBrowser(UserControl):
+    def __init__(self,lcd,uart_,i2c):
+        self.lcd = lcd
+        self.uart = uart_
+        self.i2c = i2c
+        self.eep = Geteep(self.lcd,self.i2c)
+        self.pag = 0
+        self.Selectedindex = 0
+        self.pagdata = self.eep[self.pag*256:(self.pag+1)*256]
+        self.keywindow = KeyWindow(self.lcd,self.uart,self.eep)
+        
+    def DrawKeySlot(self,posx,posy,selected = False,empty = True,slot=0):
+        self.lcd.rect(posx, posy, 33, 11, 1)
+        self.lcd.line(posx+6, posy, posx+6, posy+10, 1)
+        if not empty:
+            fontlib.printchar("+",posx+1,posy+2,self.lcd.fbuf,font = "icons",invert = False)
+        fontlib.printstring(f'{slot:04}',posx+8,posy+3,1,self.lcd.fbuf,invert = selected)
+        self.lcd.line(posx+7, posy+1, posx+8+23, posy+1, 1)
+        self.lcd.line(posx+7, posy+9, posx+8+23, posy+9, 1)
+        
+    def DrawKeyView(self):
+        self.lcd.fill(0)
+        for j in range(2):
+            for i in range(4):
+                empty_slot = True
+                selected_slot = False
+                slot_index = (i+4*j)
+                slotdata = self.pagdata[slot_index*32:(slot_index+1)*32]
+                if ((slotdata != b'\x00'*32) and (slotdata != b'\xFF'*32)):
+                    empty_slot = False
+                if (slot_index == self.Selectedindex):
+                    selected_slot = True
+                self.DrawKeySlot(34*j,12*i,selected = selected_slot,empty = empty_slot,slot=slot_index+self.pag*8)
+        fontlib.printstring(f'P.',69,33,0,self.lcd.fbuf,invert = False)
+        fontlib.printstring(f'{self.pag:03}',69,39,0,self.lcd.fbuf,invert = False)
+        self.lcd.show()
+        
+    def Ok_Func(self):
+        slot_index = self.Selectedindex+self.pag*8
+        slotdata = self.pagdata[slot_index*32:(slot_index+1)*32]
+        self.keywindow.Run(slotdata,slot_index)
+        self.pagdata = self.eep[self.pag*256:(self.pag+1)*256] 
+    
+    def Left_Func(self):
+        if self.Selectedindex > 0:
+            self.Selectedindex -= 1
+        elif self.pag > 0:
+            self.pag -=1
+            self.Selectedindex = 7
+            self.pagdata = self.eep[self.pag*256:(self.pag+1)*256]
+            
+    def Right_Func(self):
+        if self.Selectedindex < 7:
+            self.Selectedindex += 1
+        else:
+            self.pag += 1
+            self.Selectedindex = 0
+            self.pagdata = self.eep[self.pag*256:(self.pag+1)*256]
+            
+    def ESC_Func(self):
+        return("ESCAPE")
+    
+    def DEL_Func(self):
+        return("DELETE")
+        
+    def Run(self):
+        while True:
+            self.DrawKeyView()
+            r = self.CheckKeyPress()
+            if r != None:
+                return r
+            
+
+# TESTs
+# Open key Browser
+# View key
+# Max pag 127
+

@@ -12,7 +12,7 @@ def DrawConfig(lcd,Config,Configkeys,ConfigOptions,selected_index,change_config=
     lcd.show()
 
 def GetDeviceConfig():
-    Config = {"DefaultKey":"","Save To":2,"Encrypt":0,"Use Key":2}
+    Config = {"Save To":2,"Encrypt":0,"Use Key":2,"DefaultKey":"","AutoScroll":True}
     noConfigFile = True
     for file in os.listdir("/"):
         if file == 'Device.conf':
@@ -27,8 +27,8 @@ def GetDeviceConfig():
             
 def RunDeviceConfig(lcd,uart_):
     numberskeys = ['q','w','e','r','t','y','u','i','o','p']
-    ConfigOptions = {"DefaultKey":"Num","Use Key":["Defaut","Ask","Auto"],"Encrypt":["Yes","No","Ask"],"Save To":["Card","Flash","Both"]}
-    Configkeys = ["Save To","Encrypt","Use Key","DefaultKey"]
+    ConfigOptions = {"DefaultKey":"Num","Use Key":["Defaut","Ask","Auto"],"Encrypt":["Yes","No","Ask"],"Save To":["Card","Flash"],"AutoScroll":True}
+    Configkeys = ["Save To","Encrypt","Use Key","DefaultKey","AutoScroll"] # could use ConfigOptions.keys but using this to set the order
     Config = GetDeviceConfig()
     selected_index = 0
     change_config = False

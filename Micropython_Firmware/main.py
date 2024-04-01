@@ -2,32 +2,33 @@ import framebuf,time,math,random,gc,utime,network
 import pcd8544,fontlib
 from machine import Pin,SPI,SoftSPI,I2S,I2C,UART,SDCard
 from sx127x import SX127x
-import Cryptography,Popups,Notepad,Config
+import Cryptography,Popups,Notepad,Config,Files,Lora
 import Buttons
 
 spi  = SPI(2, sck=Pin(13), mosi=Pin(11), miso=Pin(12))
 spi.init(baudrate=4000000, polarity=0, phase=0)
+sd = None
 
-sd = SDCard(slot=3, width=1,
-         sck=Pin(39, pull=Pin.PULL_UP),
-         miso=Pin(21, pull=Pin.PULL_UP),
-         mosi=Pin(42, pull=Pin.PULL_UP),
-         cs=Pin(15, pull=Pin.PULL_UP),
-         cd=None,
-         wp=None,
-         freq=2000000,
-)
+try:
+    sd = SDCard(slot=3, width=1,
+             sck=Pin(39, pull=Pin.PULL_UP),
+             miso=Pin(21, pull=Pin.PULL_UP),
+             mosi=Pin(42, pull=Pin.PULL_UP),
+             cs=Pin(15, pull=Pin.PULL_UP),
+             cd=None,
+             wp=None,
+             freq=2000000)
+except:
+    print("no SD Card")
 
-lora_pins = {
-    'dio_0':6,
-    'ss':5,
-    'reset':7,
-}
 
+sx127x = SX127x(spi, pins={'dio_0':6,'ss':5,'reset':7})
 uart1 = UART(1, baudrate=9600, tx=17, rx=18)
 
 p17 = Pin(17,Pin.OPEN_DRAIN)
 p18 = Pin(18,Pin.OPEN_DRAIN)
+
+i2c = I2C(1,scl=Pin(9), sda=Pin(8),freq=400000)
 
 lcd = pcd8544.PCD8544_FRAMEBUF(spi, Pin(1, Pin.OUT), Pin(2, Pin.OUT), Pin(3, Pin.OUT))
 
@@ -37,7 +38,18 @@ backlight.off()
 Lora_NSS = Pin(5, Pin.OUT)
 Lora_NSS.on()
 
+def receive(lora):
+    print("LoRa Receiver")
 
+    while True:
+        if lora.receivedPacket():
+            try:
+                payload = lora.readPayload().decode()
+                rssi = lora.packetRssi()
+                print("RX: {} | RSSI: {}".format(payload, rssi))
+            except Exception as e:
+                print(e)
+                
 def DrawMenu(MenuOptions,SelectedIndex,maxrows = 7):
     lcd.fill(0)
     menupos = 0
@@ -125,22 +137,20 @@ uart1.init()
 #time.sleep(2)
 
 
-MainMenuOptions = ["Serial Tools","I2C Tools","LORA Tools","Bluetooth Tools","ESP-now","NotePad","Cryptography","Device Config","Device Info"]
+MainMenuOptions = ["Serial Tools","I2C Tools","LORA Tools","Bluetooth Tools","ESP-now","NotePad","File Explorer","Cryptography","Device Config","Device Info","Remove SDCard"]
 Serialtools = ["Serial Monitor","Serial Config"]
 I2Ctools = ["I2C Scanner","I2C Screen Tester"]
 LoratoolsOptions = ["LORA Monitor","LORA Mensager"]
-NotePadOptions = ["New File","Open File"]
 CryptographyOptions = ["Key Viewer","Export Keyfile","Import Keyfile","Erase All Keys"]
 
-#Popups.Progress(lcd,0.1,line1="this is line 1",line2="this is line 2")
-#Popups.Question(lcd,1,line1="Are you sure?",line2="key will be lost",Button1="Cancel",Button2=" Yep ")
-#Popups.TextInput(lcd,uart1,line1=None,line2="Enter File Name:")
-#Notepad.RunNotePad(lcd,uart1,"testfile.txt")
-#Config.ConfigOptions
-
-
+#LoraMonitor = Lora.LoraMonitor(lcd,uart1,sx127x)
+#LoraMonitor.Run()
+#FileExplorer = Files.FileExplorer(lcd,uart1,sd)
+#FileExplorer.Run()
+KeysBrowser = Cryptography.KeysBrowser(lcd,uart1,i2c)
+KeysBrowser.Run()
 #lcd.show()
-
+'''
 while True:
     MainMenuSelected = RunMenu(MainMenuOptions)
     if (MainMenuSelected == "Serial Tools"):
@@ -150,11 +160,11 @@ while True:
     if (MainMenuSelected == "LORA Tools"):
         pass
     if (MainMenuSelected == "NotePad"):
-        NotePadSelected = RunMenu(NotePadOptions)
-        if (NotePadSelected == "New File"):
-            Notepad.RunNotePad(lcd,uart1,FilePath = None)
-        if (NotePadSelected == "Open File"):
-            pass
+        Notepad.RunNotePad(lcd,uart1,sd,FilePath = None)
+    if (MainMenuSelected == "File Explorer"):
+        fileAction,filepath = FileExplorer.Run(lcd,uart1,sd)
+        if fileAction == "Edit":
+            Notepad.RunNotePad(lcd,uart1,sd,FilePath = filepath)
     if (MainMenuSelected == "Cryptography"):
         CryptographySelected = RunMenu(CryptographyOptions)
         if CryptographySelected == "Key Viewer":
@@ -163,4 +173,4 @@ while True:
         DisplayDeviceInfo()
     if (MainMenuSelected == "Device Config"):
         Config.RunDeviceConfig(lcd,uart1)
-        
+'''

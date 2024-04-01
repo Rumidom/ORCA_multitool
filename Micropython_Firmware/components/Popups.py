@@ -19,7 +19,7 @@ def Splash(lcd,lines,font = "five",time = 2000):
     lcd.show()
     utime.sleep_ms(time)
     
-def DrawQuestion(lcd,index,lines,Options = (None,None)):
+def DrawOptionChoice(lcd,index,lines,Options):
     lcd.fill(0)
     if Options[0] != None and Options[1] == None:
         Buttons.DrawButton(lcd,24,25,Options[0],selected = (index == 0))
@@ -30,7 +30,7 @@ def DrawQuestion(lcd,index,lines,Options = (None,None)):
     DisplayCenteredLines(lcd,lines)
     lcd.show()
     
-def Question(lcd,uart1,lines,Options = (None,None)):
+def OptionChoice(lcd,uart1,lines,Options):
     selected_index = 0
     while True:
         if (uart1.any()>0):
@@ -45,7 +45,7 @@ def Question(lcd,uart1,lines,Options = (None,None)):
                     selected_index -= 1
             if w == b'\x9b': #ESC
                 return("ESCAPE")
-        DrawQuestion(lcd,selected_index,lines,Options = Options)
+        DrawOptionChoice(lcd,selected_index,lines,Options = Options)
 
 def DrawTextInput(lcd,lines,Input=None):
     lcd.fill(0)
