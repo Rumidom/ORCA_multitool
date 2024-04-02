@@ -61,4 +61,6 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 ## Donating:
 Help me pay for prototyping costs by becoming a sponsor or using the referal links on the BOM list
 
+## License:
+the ORCA Project is MIT licensed.
 
