@@ -32,7 +32,7 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - [x] Displays available/used Ram, available/used Flash, available/used SD Card space, Device MAC Address
 - Cryptograpfy
 - [x] View, Generate, Delete 256 bit AES keys on the EEPROM
-- [x] AES File Encryption/Decryption using EEPROM keys
+- [x] AES CBC mode File Encryption/Decryption using 256 bit keys from EEPROM 
 - NotePad
 - [x] Create, Load, Edit files on the SDCard/Flash
 - LORA Tools
@@ -58,7 +58,7 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - [ ] Space invaders
 - [ ] Lunar Lander
 - Other Features
-- [ ] OTP Generator (Creates a time based one time password from a file, encrypted or not)
+- [ ] OTP Generator (Creates a time based one time password from a file)
   
 ## Donating:
 Help me pay for prototyping costs by becoming a sponsor or using the referal links on the BOM list
