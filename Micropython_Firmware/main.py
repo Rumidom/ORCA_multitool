@@ -147,8 +147,10 @@ CryptographyOptions = ["Key Viewer","Export Keyfile","Import Keyfile","Erase All
 #LoraMonitor.Run()
 #FileExplorer = Files.FileExplorer(lcd,uart1,sd)
 #FileExplorer.Run()
-KeysBrowser = Cryptography.KeysBrowser(lcd,uart1,i2c)
-KeysBrowser.Run()
+#KeysBrowser = Cryptography.KeysBrowser(lcd,uart1,i2c)
+#KeysBrowser.Run()
+DeviceConfig = Config.DeviceConfig(lcd,uart1)
+DeviceConfig.Run()
 #lcd.show()
 '''
 while True:

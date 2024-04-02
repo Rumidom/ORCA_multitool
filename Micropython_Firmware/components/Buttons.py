@@ -44,14 +44,13 @@ def DrawButton(lcd,posx,posy,text,selected = False):
             lcd.fill_rect(posx+18+halftextwidth, posy, 18-halftextwidth, 9, 1)
 
 def DrawMenuCheckBox(lcd,yi,text,selected = False,checked = False):
-    
     if len(text) < 13:
         text = text + " " * (13 - len(text))
     fontlib.printstring(text,3,(10*yi)+2,0,lcd.fbuf,font = "five",invert = selected)
     if checked:
-        fontlib.printstring("_^a",68,10*yi+1,0,lcd.fbuf,font = "icons")
-    else:
         fontlib.printstring("_`a",68,10*yi+1,0,lcd.fbuf,font = "icons")
+    else:
+        fontlib.printstring("_^a",68,10*yi+1,0,lcd.fbuf,font = "icons")
 
 def DrawMenuScrollOptions(lcd,yi,text,options,index,selected=False,change = False):
     op_text = options[index]
@@ -81,7 +80,7 @@ def DrawMenuNumberInput(lcd,yi,text,num = "",selected=False,change = False):
     fontlib.printstring(num,62,(10*yi)+2,0,lcd.fbuf,font = "five",invert = change)
 
 def DrawScrollBar(lcd,posx,posy,index,linesnum,ScreenMaxLines=4,Bartotal = 64):
-    
+
     chunks = math.ceil(linesnum/ScreenMaxLines)
     if chunks == 0:
         chunks = 1

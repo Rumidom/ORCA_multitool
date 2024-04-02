@@ -14,12 +14,14 @@ class UserControl():
                 r = self.Right_Func()
             elif self.has_method('Left_Func') and w == b'\xbb': #<<
                 r = self.Left_Func()
+            elif self.has_method('BKSP_Func') and w == b'\x08': #BKSP
+                r = self.BKSP_Func()
             elif self.has_method('ESC_Func') and w == b'\x1b': #ESC
                 r = self.ESC_Func()
             elif self.has_method('DEL_Func') and w == b'\x7f': #DEL
                 r = self.DEL_Func()
             else:
-                r = self.Input_Func()
+                r = self.Input_Func(w)
             if DrawFunction:
                 DrawFunction()
         return r
@@ -39,6 +41,9 @@ class ClassName(UserControl):
         
     def Right_Func(self):
         return("RIGHT")
+    
+    def BKSP_Func():
+        return("BKSP")
         
     def ESC_Func(self):
         return("ESCAPE")

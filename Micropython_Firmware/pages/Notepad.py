@@ -4,8 +4,8 @@ from Cryptography import GetKeyFromEEPROM,DecryptBytearraytoString,EncryptBytear
 import Popups
 import fontlib
 
-def DrawCursor(lcd,xi,yi,charwidth = 5,spce=0,selected = False):
-    fontlib.printstring("|",(charwidth+spce)*xi+1,(7*yi),0,lcd.fbuf,invert = selected)
+def DrawCursor(lcd,xi,yi,charwidth = 5,lineheight=7,spce=0,selected = False):
+    fontlib.printstring("|",(charwidth+spce)*xi+1,(lineheight*yi),0,lcd.fbuf,invert = selected)
     
 def RunNotePad(lcd,uart_,sd,FilePath = None):
     DConfig = GetDeviceConfig()
