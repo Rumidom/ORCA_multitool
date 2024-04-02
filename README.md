@@ -40,8 +40,8 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - [ ] LORA Sender (Sends lora packets)
 - [ ] LORA Menssager (Sends and Recives Encrypted Messages, On a Chatapp-like UI)
 - OOK/FSK/ASK Tools
-- [ ] LORA Monitor (Recieve,Display and Save recieved OOK/FSK/ASK packets)
-- [ ] LORA Sender (Sends OOK/FSK/ASK packets)
+- [ ] OOK/FSK/ASK Monitor (Recieve,Display and Save recieved OOK/FSK/ASK packets)
+- [ ] OOK/FSK/ASK Sender (Sends OOK/FSK/ASK packets)
 - I2C Tools
 - [ ] I2C Scanner
 - [ ] I2C Monitor (Recive and display I2C data)
@@ -51,13 +51,15 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - [ ] Serial Monitor
 - WIFI Tools
 - [ ] SSID Scanner/Signal Strength Meter
-- ESP-now Tools
+- ESP-NOW Tools
 - IR Tools
 - Bluetooth Tools
 - Games
 - [ ] Space invaders
 - [ ] Lunar Lander
-      
+- Other Features
+- [ ] OTP Generator (Creates a time based one time password from a file, encrypted or not)
+  
 ## Donating:
 Help me pay for prototyping costs by becoming a sponsor or using the referal links on the BOM list
 
