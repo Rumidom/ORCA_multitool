@@ -3,7 +3,7 @@ import pcd8544,fontlib
 from machine import Pin,SPI,SoftSPI,I2S,I2C,UART,SDCard
 from sx127x import SX127x
 import Cryptography,Popups,Notepad,Config,Files,Lora
-import Buttons
+import UI
 
 spi  = SPI(2, sck=Pin(13), mosi=Pin(11), miso=Pin(12))
 spi.init(baudrate=4000000, polarity=0, phase=0)
@@ -149,8 +149,10 @@ CryptographyOptions = ["Key Viewer","Export Keyfile","Import Keyfile","Erase All
 #FileExplorer.Run()
 #KeysBrowser = Cryptography.KeysBrowser(lcd,uart1,i2c)
 #KeysBrowser.Run()
-DeviceConfig = Config.DeviceConfig(lcd,uart1)
-DeviceConfig.Run()
+#DeviceConfig = Config.DeviceConfig(lcd,uart1)
+#DeviceConfig.Run()
+Notepad = Notepad.Notepad(lcd,uart1,sd,FilePath = None)
+Notepad.Run()
 #lcd.show()
 '''
 while True:

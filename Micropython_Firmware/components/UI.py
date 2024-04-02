@@ -92,4 +92,6 @@ def DrawScrollBar(lcd,posx,posy,index,linesnum,ScreenMaxLines=4,Bartotal = 64):
     if linesnum > ScreenMaxLines:
         lcd.fill_rect(thumbx, posy, math.ceil(chunkSize+remainder), 4, 1)
         lcd.rect(posx, posy, Bartotal, 4, 1)
-    
+        
+def DrawCursor(lcd,xi,yi,charwidth = 5,lineheight=7,spce=0,selected = False):
+    fontlib.printstring("|",(charwidth+spce)*xi+1,(lineheight*yi),0,lcd.fbuf,invert = selected)

@@ -31,7 +31,6 @@ class ClassName(UserControl):
     def __init__(self,lcd,uart_):
         self.lcd = lcd
         self.uart = uart_
-        self.sd = sd
 
     def Ok_Func(self):
         return("OK")
@@ -51,11 +50,10 @@ class ClassName(UserControl):
     def DEL_Func(self):
         return("DELETE")
         
-    def Input_Func(self):
+    def Input_Func(self,w):
         return("INPUT")
     
     def Run(self):
-        self.DrawFunction()
         while True:
             self.DrawFunction()
             self.CheckKeyPress()

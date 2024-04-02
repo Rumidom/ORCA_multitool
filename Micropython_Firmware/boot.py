@@ -6,7 +6,7 @@ import sys
 FileList = os.listdir("/")
 File_structure = {"/lib":["bdevice.py","eeprom_i2c.py","pcd8544.py","sx127x.py","fontlib.py","fonts_dictionary.py"],
                   "/pages":["Config.py","Cryptography.py","Notepad.py","Files.py"],
-                  "/components":["Buttons.py","Popups.py"],
+                  "/components":["UI.py","Popups.py"],
                   "/files":[],
                   "/sd":[]
                   }

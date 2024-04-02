@@ -1,15 +1,15 @@
-import Buttons,Popups
+import UI,Popups
 import os,json
 from Control import UserControl
 
-def Defauts():
-    Dft_Config = {"Save To":2,"Encrypt":0,"Use Key":2,"DefaultKey":"","AutoScroll":True}
-    ConfigOptions = {"DefaultKey":"Num","Use Key":["Defaut","Ask","Auto"],"Encrypt":["Yes","No","Ask"],"Save To":["Card","Flash"],"AutoScroll":"Bool"}
+def ConstData():
+    Dft_Config = {"Save To":0,"Encrypt":0,"Use Key":2,"DefaultKey":"","AutoScroll":True}
+    ConfigOptions = {"DefaultKey":"Num","Use Key":["Dfault","Ask","Auto"],"Encrypt":["Yes","No","Ask"],"Save To":["Card","Flash"],"AutoScroll":"Bool"}
     Configkeys = ["Save To","Encrypt","Use Key","DefaultKey","AutoScroll"] # could use ConfigOptions.keys but using this to set the order
     return((Dft_Config,ConfigOptions,Configkeys))
 
 def GetDeviceConfig():
-    Dft_Config = Defauts()[0]
+    Dft_Config = ConstData()[0]
     Config = Dft_Config
     noConfigFile = True
     for file in os.listdir("/"):
@@ -32,8 +32,8 @@ class DeviceConfig(UserControl):
         self.lcd = lcd
         self.uart = uart_
         self.numberskeys = ['q','w','e','r','t','y','u','i','o','p']
-        self.ConfigOptions = Defauts()[1]
-        self.Configkeys = Defauts()[2] # could use ConfigOptions.keys but using this to set the order
+        self.ConfigOptions = ConstData()[1]
+        self.Configkeys = ConstData()[2] # could use ConfigOptions.keys but using this to set the order
         self.Config = GetDeviceConfig()
         self.selected_index = 0
         self.change_config = False
@@ -97,11 +97,11 @@ class DeviceConfig(UserControl):
         SelectList = [x == self.selected_index for x in range(len(self.Configkeys))]
         for i,key in enumerate(self.Configkeys):
             if isinstance(self.ConfigOptions[key], list):
-                Buttons.DrawMenuScrollOptions(self.lcd,i,key,self.ConfigOptions[key],self.Config[key],selected=SelectList[i],change = (self.selected_index == i and self.change_config))
+                UI.DrawMenuScrollOptions(self.lcd,i,key,self.ConfigOptions[key],self.Config[key],selected=SelectList[i],change = (self.selected_index == i and self.change_config))
             elif self.ConfigOptions[key] == "Num":
-                Buttons.DrawMenuNumberInput(self.lcd,i,key,num = self.Config[key],selected=SelectList[i],change = (self.selected_index == i and self.change_config))
+                UI.DrawMenuNumberInput(self.lcd,i,key,num = self.Config[key],selected=SelectList[i],change = (self.selected_index == i and self.change_config))
             elif self.ConfigOptions[key] == "Bool":
-                Buttons.DrawMenuCheckBox(self.lcd,i,key,selected = SelectList[i],checked = self.Config[key])
+                UI.DrawMenuCheckBox(self.lcd,i,key,selected = SelectList[i],checked = self.Config[key])
         self.lcd.show()
     
     def Run(self):

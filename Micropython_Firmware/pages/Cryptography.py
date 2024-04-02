@@ -2,9 +2,11 @@ import random
 from machine import Pin,I2C
 from eeprom_i2c import EEPROM, T24C256
 import fontlib
-import Popups,Buttons
+import Popups,UI
 import ucryptolib
 from Control import UserControl
+import hashlib
+import sys
 
 def Geteep(lcd,i2c):
     eep = None
@@ -21,6 +23,9 @@ def Generatekey(seed=None):
     for i in range(16):
         key += random.getrandbits(32).to_bytes(2,'big')
     return key
+
+def XOR_Bytearrays(X,Y):
+    return bytes(a ^ b for (a, b) in zip(X, Y))
 
 def SaveKeyToEEPROM(lcd,key,slot_index,eep):
     eep[slot_index*32:(slot_index+1)*32] = key
@@ -61,27 +66,35 @@ def EraseEEPROM(lcd,eep):
 def chunks(string, length):
     return list(string[0+i:length+i] for i in range(0, len(string), length))
 
-def EncryptBytearray(data,Key):
-    enc = ucryptolib.aes(Key, 1) # Electronic Code Book (ECB).
+def EncryptBytearray(data,Key,Keynum):
+    # 256 bit AES Cipher Block Chaining (CBC) 
+    IV = hashlib.sha256(Keynum.to_bytes(32, sys.byteorder)).digest()
+    enc = ucryptolib.aes(Key, 1)
     datalist = chunks(data, 32)
     if len(datalist[-1]) < 32:
         datalist[-1] = datalist[-1] + b'\x00' * (32 - (len(datalist[-1]) ))
     encrypted_List = []
     for data in datalist:
-        encrypted_List.append(enc.encrypt(data))
+        XOR_data = XOR_Bytearrays(data,IV)
+        encrypted_List.append(enc.encrypt(XOR_data))
+        IV = XOR_data
     output = bytearray()
     for encrypteddbytes in encrypted_List:
         output.extend(encrypteddbytes)
     return(output)
         
-def DecryptBytearray(data,Key):
+def DecryptBytearray(data,Key,Keynum):
+    # 256 bit AES Cipher Block Chaining (CBC) 
+    IV = hashlib.sha256(Keynum.to_bytes(32, sys.byteorder)).digest()
     dec = ucryptolib.aes(Key, 1)
     encrypted_List = []
     for i in range(len(data)//32):
         encrypted_List.append(data[32*i:32*(i+1)])
     plain_text = bytearray()
     for encryptedbytes in encrypted_List:
-        plain_text.extend(dec.decrypt(encryptedbytes))
+        decrypted_PreXOR = dec.decrypt(encryptedbytes)
+        plain_text.extend(XOR_Bytearrays(decrypted_PreXOR,IV))
+        IV = decrypted_PreXOR
     return plain_text
 
 def DecryptBytearraytoString(data,Key):
@@ -136,7 +149,7 @@ class KeyWindow(UserControl):
                 bindex = (i+7*j)
                 if bindex < 32:
                     fontlib.printstring(hexdata[bindex*2:bindex*2+2],i*12+1,j*7,0,self.lcd.fbuf)
-        Buttons.BottomMenu(self.lcd,self.Menubuttons,self.selected_index,MenuActive = True)
+        UI.BottomMenu(self.lcd,self.Menubuttons,self.selected_index,MenuActive = True)
         self.lcd.show()
         
     def Run(self,keydata,keyslot):

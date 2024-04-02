@@ -1,4 +1,4 @@
-import Buttons
+import UI
 from Control import UserControl
 import fontlib
 import utime
@@ -61,9 +61,9 @@ class LoraMonitor(UserControl):
             if self.scroll > len(packet[1])-self.MaxCharsPerLine:
                 self.scroll = 0
             j = i+self.Pindex
-            Buttons.DrawIconIndexMenuOption(self.lcd,i,j,payload.decode(),icon=icon,posx=3,selected = (i == self.PacketIndex-self.Pindex))
+            UI.DrawIconIndexMenuOption(self.lcd,i,j,payload.decode(),icon=icon,posx=3,selected = (i == self.PacketIndex-self.Pindex))
 
-        Buttons.DrawScrollBar(self.lcd,10,40,self.PacketIndex,self.PacketNum)
+        UI.DrawScrollBar(self.lcd,10,40,self.PacketIndex,self.PacketNum)
         self.lcd.show()
 
     def CallbackFunction(self,radio_Obj, payload):

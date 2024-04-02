@@ -1,4 +1,4 @@
-import Buttons,Popups
+import UI,Popups
 import os,utime
 from machine import SDCard,Pin
 from Control import UserControl
@@ -92,9 +92,9 @@ class FileExplorer(UserControl):
                 filetext = file[self.scroll:self.scroll+15]
             else:
                 filetext = file
-            Buttons.DrawIconMenuOption(self.lcd,i,filetext,icon = self.FileIcons[i+self.Pindex],selected = (i == self.FileIndex-self.Pindex))
+            UI.DrawIconMenuOption(self.lcd,i,filetext,icon = self.FileIcons[i+self.Pindex],selected = (i == self.FileIndex-self.Pindex))
         if self.MenuActive:
-            Buttons.BottomMenu(self.lcd,self.FileOptions,self.Menu_index,MenuActive=self.MenuActive)
+            UI.BottomMenu(self.lcd,self.FileOptions,self.Menu_index,MenuActive=self.MenuActive)
         self.lcd.show()
         
     def GetFileIcons(self):

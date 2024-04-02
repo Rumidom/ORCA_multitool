@@ -1,167 +1,193 @@
 import time,os
-from Config import GetDeviceConfig
+import Config
 from Cryptography import GetKeyFromEEPROM,DecryptBytearraytoString,EncryptBytearray,AutoGenerateKeyOnEmptySlot
 import Popups
 import fontlib
+import UI
+from Control import UserControl
 
-def DrawCursor(lcd,xi,yi,charwidth = 5,lineheight=7,spce=0,selected = False):
-    fontlib.printstring("|",(charwidth+spce)*xi+1,(lineheight*yi),0,lcd.fbuf,invert = selected)
-    
-def RunNotePad(lcd,uart_,sd,FilePath = None):
-    DConfig = GetDeviceConfig()
-    keynum = None
-    key = None
-    vfs = os.VfsFat(sd)
-    os.mount(vfs, "/sd")
-    if FilePath != None:
-        try:
-            keynum = int(FilePath.split("[(")[1].split(")]")[0])
-        except:
-            keynum = None
-        if keynum != None and keynum < 1024:
-            key = GetKeyFromEEPROM(keynum)
-            print(FilePath)
-            f = open(FilePath,"rb")
-            data = f.read()
-            f.close
-            LineList = DecryptBytearraytoString(data,key).splitlines(True)
-        else:
-            f = open(FilePath)
-            data = f.read()
-            f.close
-            LineList = data.splitlines(True)
+class Notepad(UserControl):
+    def __init__(self,lcd,uart_,sd,FilePath = None):
+        self.lcd = lcd
+        self.uart = uart_
+        self.sd = sd
+        self.FilePath = FilePath
+        self.DConfig = Config.GetDeviceConfig()
+        self.keynum = None
+        self.key = None
+        self.cursorPos = 0
+        self.cursorLine = 0
+        self.WindowPos_x = 0
+        self.WindowPos_y = 0
+        self.inittime = time.ticks_ms()
+        self.cursorBlink = False
+        self.lenList = []
+        self.screen_maxchars = 16
+        self.screen_maxlines = 7
+        if sd:
+            vfs = os.VfsFat(sd)
+            os.mount(vfs, "/sd")
             
-    else:
-        LineList = [""]
+        if self.FilePath != None:
+            try:
+                self.keynum = int(FilePath.split("[(")[1].split(")]")[0])
+            except:
+                self.keynum = None
+            if keynum != None and keynum < 1024:
+                self.key = GetKeyFromEEPROM(self.keynum)
+                print(self.FilePath)
+                f = open(self.FilePath,"rb")
+                data = f.read()
+                f.close
+                self.LineList = DecryptBytearraytoString(data,key).splitlines(True)
+            else:
+                f = open(self.FilePath)
+                data = f.read()
+                f.close
+                self.LineList = data.splitlines(True)
+        else:
+            self.LineList = [""]
+        for Line in self.LineList:
+            self.lenList.append(len(Line))
+            
+    def Ok_Func(self):
+        line = self.LineList[self.cursorLine]
+        self.LineList[self.cursorLine] = line[0:self.cursorPos]+"\n"
+        newline = line[self.cursorPos:]
+        if newline == "":
+            newline = "\n"
+        self.LineList = self.LineList[0:self.cursorLine+1]+[self.newline]+self.LineList[self.cursorLine+1:]
+        self.lenList = self.lenList[0:self.cursorLine+1]+[len(self.newline)]+self.lenList[self.cursorLine+1:]
+        self.cursorPos = 0
+        self.WindowPos_x = 0
+        self.cursorLine += 1
+        if self.cursorLine > (self.screen_maxlines-1):
+            self.WindowPos_y += 1 
+        #print(self.cursorPos,self.cursorLine,self.WindowPos_y)
+        
+    def Left_Func(self):
+        if self.cursorPos > 0:
+            self.cursorPos -= 1
+            if ((self.WindowPos_x > 0) and (self.cursorPos == self.WindowPos_x-1)):
+                self.WindowPos_x -= 1
+
+        elif cursorLine > 0:
+            self.cursorLine -= 1
+            self.cursorPos = self.lenList[self.cursorLine]-1
+            if self.cursorPos > self.screen_maxchars:
+                self.WindowPos_x = self.lenList[self.cursorLine]-self.screen_maxchars
+            if ((self.WindowPos_y > 0) and (self.cursorLine == self.WindowPos_y-1)):
+                self.WindowPos_y -= 1 
+        #print(self.cursorPos,self.cursorLine,self.WindowPos_y)
+        
+    def Right_Func(self):
+        if self.cursorPos < self.lenList[cursorLine]:
+            self.cursorPos += 1
+            if self.cursorPos > self.screen_maxchars:
+                self.WindowPos_x += 1
+        else:
+            if self.cursorLine < (len(self.LineList)-1):
+                self.cursorPos = 0
+                self.cursorLine += 1
+                self.WindowPos_x = 0
+                if self.cursorLine > (self.screen_maxlines-1):
+                    self.WindowPos_y += 1
+        #print(self.cursorPos,self.cursorLine,self.WindowPos_y)
     
-    cursorPos = 0
-    cursorLine = 0
-    WindowPos_x = 0
-    WindowPos_y = 0
-    inittime = time.ticks_ms()
-    cursorBlink = False
-    lenList = []
-    screen_maxchars = 16
-    screen_maxlines = 7
-    for Line in LineList:
-        lenList.append(len(Line))
-    while True:
-        lcd.fill(0)
-        if ((time.ticks_ms() - inittime) > 500):
-            cursorBlink = not cursorBlink
-            inittime = time.ticks_ms()
-        for i,Line in enumerate(LineList[WindowPos_y:screen_maxlines-WindowPos_y]):
+    def BKSP_Func(self):
+        #print(cursorPos,cursorLine,lenList[cursorLine])
+        if self.cursorPos > 0:
+            line = self.LineList[self.cursorLine]
+            self.lenList[self.cursorLine] -= 1
+            line = line[0:self.cursorPos-1]+line[self.cursorPos:]
+            self.LineList[self.cursorLine] = line
+            self.cursorPos -= 1
+        elif (self.lenList[self.cursorLine] == 0) or (self.LineList[0] == "\n"):
+            del self.LineList[self.cursorLine]
+            del self.lenList[self.cursorLine]
+        
+    def ESC_Func(self):
+        Save_Ans = Popups.OptionChoice(lcd,uart_,(None,"Save file?"),("Yes","No"))
+        if (Save_Ans == "No"):
+            os.umount('/sd')
+            return("ESCAPE")
+        else:
+            data = "".join(self.LineList).encode()
+            if (FilePath == None):
+                self.FilePath = Popups.TextInput(lcd,uart_,["Choose a file","name/path:"])
+                if self.DConfig["Save To"] == 0: #Card
+                    self.FilePath = "sd/"+self.FilePath
+                elif self.DConfig["Save To"] == 1: #Flash
+                    self.FilePath = "files/"+self.FilePath     
+            print("Save To: ", self.DConfig["Save To"])
+            print(self.FilePath)
+            if (self.DConfig["Encrypt"] != 1):
+                Enc_ = "Yes"
+                Use_Key_ = "Auto"
+                
+                if (self.DConfig["Encrypt"] == 2):#Ask
+                    Enc_ = Popups.OptionChoice(lcd,uart_,(None,"Encrypt file?"),("Yes","No"))
+                if (self.DConfig["Use Key"] == 0):#Default
+                    Use_Key_ = "Default"
+                elif (self.DConfig["Use Key"] == 1):#Ask
+                    if self.key != None:
+                        Use_Key_=  Popups.OptionChoice(lcd,uart_,("Which key should","be used?"),("Default","Auto","Same"))
+                    else:
+                        Use_Key_=  Popups.OptionChoice(lcd,uart_,("Which key should","be used?"),("Default","Auto")) 
+                if Enc_ == "Yes":
+                    if Use_Key_ == "Auto":
+                        self.key,self.keynum = AutoGenerateKeyOnEmptySlot(self.lcd,self.eep)
+                    elif Use_Key_ == "Default":
+                        self.keynum = int(self.DConfig['DefaultKey'])
+                        self.key = GetKeyFromEEPROM(self.lcd,self.keynum,self.eep)
+                    Popups.Splash(self.lcd,["Encrypting With","key: "+str(self.keynum)])
+                    FileNdot = self.FilePath.split('.')
+                    self.FilePath = FileNdot[0] +"[({})]".format(self.keyslot)
+                    if len(FileNdot) > 1:
+                        self.FilePath+'.'+FileNdot[-1]
+                    data = EncryptBytearray(data,self.key)
+            with open(FilePath, 'w') as f:
+                f.write(data)
+            os.umount('/sd')
+    
+    def DEL_Func(self):
+        return("DELETE")
+        
+    def Input_Func(self,w):
+        if (w > b'\x0f') and (w != b'\x7f'):
+            dcode = w.decode("utf-8")
+            if dcode:
+                line = self.LineList[self.cursorLine]
+                self.lenList[self.cursorLine] += 1
+                line = line[0:self.cursorPos]+dcode+line[self.cursorPos:]
+                self.LineList[self.cursorLine] = line
+                self.cursorPos += 1
+                if self.cursorPos > self.screen_maxchars:
+                    self.WindowPos_x += 1
+    
+    def DrawNotePad(self):
+        self.lcd.fill(0)
+        if ((time.ticks_ms() - self.inittime) > 500):
+            self.cursorBlink = not self.cursorBlink
+            self.inittime = time.ticks_ms()
+        if self.cursorBlink:
+            UI.DrawCursor(self.lcd,self.cursorPos-self.WindowPos_x,self.cursorLine-self.WindowPos_y)
+        for i,Line in enumerate(self.LineList[self.WindowPos_y:self.screen_maxlines-self.WindowPos_y]):
             if Line != '':
                 if Line[-1] == "\n":
                     Line = Line[:-1]
-            fontlib.printstring(Line[WindowPos_x:WindowPos_x+screen_maxchars],3,7*i,0,lcd.fbuf,invert = False)
-        if (uart_.any()>0):
-            w = uart_.read()
-            #print(w)
-            if w == b'\xab': #>>
-                if cursorPos < lenList[cursorLine]:
-                    cursorPos += 1
-                    if cursorPos > screen_maxchars:
-                        WindowPos_x += 1
-                else:
-                    if cursorLine < (len(LineList)-1):
-                        cursorPos = 0
-                        cursorLine += 1
-                        WindowPos_x = 0
-                        if cursorLine > (screen_maxlines-1):
-                            WindowPos_y += 1
-                print(cursorPos,cursorLine,WindowPos_y)
-            elif w == b'\n': #Ok/Enter
+            fontlib.printstring(Line[self.WindowPos_x:self.WindowPos_x+self.screen_maxchars],3,7*i,0,self.lcd.fbuf,invert = False)   
+        self.lcd.show()
+        
+    def Run(self):
+        while True:
+            self.DrawNotePad()
+            self.CheckKeyPress()
+            r = self.CheckKeyPress()
+            if r != None:
+                return r
 
-                line = LineList[cursorLine]
-                LineList[cursorLine] = line[0:cursorPos]+"\n"
-                newline = line[cursorPos:]
-                if newline == "":
-                    newline = "\n"
-                LineList = LineList[0:cursorLine+1]+[newline]+LineList[cursorLine+1:]
-                lenList = lenList[0:cursorLine+1]+[len(newline)]+lenList[cursorLine+1:]
-                cursorPos = 0
-                WindowPos_x = 0
-                cursorLine += 1
-                if cursorLine > (screen_maxlines-1):
-                    WindowPos_y += 1 
-                print(cursorPos,cursorLine,WindowPos_y)
-            elif w == b'\xbb': #<<
-                
-                if cursorPos > 0:
-                    cursorPos -= 1
-                    if ((WindowPos_x > 0) and (cursorPos == WindowPos_x-1)):
-                        WindowPos_x -= 1
 
-                elif cursorLine > 0:
-                    cursorLine -= 1
-                    cursorPos = lenList[cursorLine]-1
-                    if cursorPos > screen_maxchars:
-                        WindowPos_x = lenList[cursorLine]-screen_maxchars
-                    if ((WindowPos_y > 0) and (cursorLine == WindowPos_y-1)):
-                        WindowPos_y -= 1 
-                print(cursorPos,cursorLine,WindowPos_y)
-            elif w == b'\x08': #BKSP
-                #print(cursorPos,cursorLine,lenList[cursorLine])
-                if cursorPos > 0:
-                    line = LineList[cursorLine]
-                    lenList[cursorLine] -= 1
-                    line = line[0:cursorPos-1]+line[cursorPos:]
-                    LineList[cursorLine] = line
-                    cursorPos -= 1
-                elif (lenList[cursorLine] == 0) or (LineList[0] == "\n"):
-                    del LineList[cursorLine]
-                    del lenList[cursorLine]
-            elif w == b'\x1b': #ESC
-                Save_Ans = Popups.OptionChoice(lcd,uart_,(None,"Save file?"),("Yes","No"))
-                if (Save_Ans == "No"):
-                    os.umount('/sd')
-                    return("ESCAPE")
-                else:
-                    data = "".join(LineList).encode()
-                    if (FilePath == None):
-                        FilePath = Popups.TextInput(lcd,uart_,["Choose a file","name/path:"])
-                        if DConfig["Save To"] == 1: #Flash
-                            FilePath = "files/"+FilePath
-                        elif DConfig["Save To"] == 0: #Card
-                            FilePath = "sd/"+FilePath
-                    print("Save To: ", DConfig["Save To"])
-                    print(FilePath)
-                    if (DConfig["Encrypt"] != 1):
-                        Enc_Ans = "Yes"
-                        Use_Key_Ans = "Auto"
-                        if (DConfig["Encrypt"] == 2):#Ask
-                            Enc_Ans = Popups.OptionChoice(lcd,uart_,(None,"Encrypt file?"),("Yes","No"))
-                        if (DConfig["Use Key"] == 1):#Ask
-                            Use_Key_Ans =  Popups.OptionChoice(lcd,uart_,("Which key should","be used?"),("Default","Auto"))
-                        if Enc_Ans == "Yes":
-                            key,keyslot = None,None
-                            if Use_Key_Ans == "Auto":
-                                key,keyslot = AutoGenerateKeyOnEmptySlot(lcd)
-                            elif Use_Key_Ans == "Default":
-                                keyslot = int(DConfig['DefaultKey'])
-                                key = GetKeyFromEEPROM(keyslot)
-                            Popups.Splash(lcd,["Encrypting With","key: "+str(keyslot)])
-                            FileNdot = FilePath.split('.')
-                            FilePath = FileNdot[0] +"[({})]".format(keyslot)
-                            if len(FileNdot) > 1:
-                                FilePath+'.'+FileNdot[-1]
-                            data = EncryptBytearray(data,key)
-                    with open(FilePath, 'w') as f:
-                        f.write(data)
-                    os.umount('/sd')
-                    return("ESCAPE")
-            elif (w > b'\x0f') and (w != b'\x7f'):
-                dcode = w.decode("utf-8")
-                if dcode:
-                    line = LineList[cursorLine]
-                    lenList[cursorLine] += 1
-                    line = line[0:cursorPos]+dcode+line[cursorPos:]
-                    LineList[cursorLine] = line
-                    cursorPos += 1
-                    if cursorPos > screen_maxchars:
-                        WindowPos_x += 1
                     
-        if cursorBlink:
-            DrawCursor(lcd,cursorPos-WindowPos_x,cursorLine-WindowPos_y)
-        lcd.show()
+
+        
