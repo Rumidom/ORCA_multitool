@@ -18,6 +18,8 @@ class UserControl():
                 r = self.ESC_Func()
             elif self.has_method('DEL_Func') and w == b'\x7f': #DEL
                 r = self.DEL_Func()
+            else:
+                r = self.Input_Func()
             if DrawFunction:
                 DrawFunction()
         return r
@@ -44,6 +46,9 @@ class ClassName(UserControl):
     def DEL_Func(self):
         return("DELETE")
         
+    def Input_Func(self):
+        return("INPUT")
+    
     def Run(self):
         self.DrawFunction()
         while True:
