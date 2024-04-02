@@ -9,7 +9,7 @@ ORCA (Operational Resilient Computing Asset) is a Opensource portable multitool/
 - Expansion/periferal ports (including STEMMA QT)
 - SX1278 Radio
 - Micro SD card slot
-- real-time clock IC
+- Real-time clock IC
 
 ## ORCA V1
 First version of the PCB had a lot of mistakes, I'm working on a V2, do not recomend using V1 at all. I'm currently developing the firmware on a modded version of the device.
@@ -31,8 +31,8 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - Device Info
 - [x] Displays available/used Ram, available/used Flash, available/used SD Card space, Device MAC Address
 - Cryptograpfy
-- [x] View, Generate, Delete 32 Byte AES keys on the EEPROM
-- [x] AES File Encryption/Decryption using EEPROM keys
+- [x] View, Generate, Delete 256 bit AES keys on the EEPROM
+- [x] AES CBC mode File Encryption/Decryption using 256 bit keys from EEPROM 
 - NotePad
 - [x] Create, Load, Edit files on the SDCard/Flash
 - LORA Tools
@@ -40,8 +40,8 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - [ ] LORA Sender (Sends lora packets)
 - [ ] LORA Menssager (Sends and Recives Encrypted Messages, On a Chatapp-like UI)
 - OOK/FSK/ASK Tools
-- [ ] LORA Monitor (Recieve,Display and Save recieved OOK/FSK/ASK packets)
-- [ ] LORA Sender (Sends OOK/FSK/ASK packets)
+- [ ] OOK/FSK/ASK Monitor (Recieve,Display and Save recieved OOK/FSK/ASK packets)
+- [ ] OOK/FSK/ASK Sender (Sends OOK/FSK/ASK packets)
 - I2C Tools
 - [ ] I2C Scanner
 - [ ] I2C Monitor (Recive and display I2C data)
@@ -51,16 +51,18 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - [ ] Serial Monitor
 - WIFI Tools
 - [ ] SSID Scanner/Signal Strength Meter
-- ESP-now Tools
+- ESP-NOW Tools
 - IR Tools
 - Bluetooth Tools
 - Games
 - [ ] Space invaders
 - [ ] Lunar Lander
-      
+- Other Features
+- [ ] OTP Generator (Creates a time based one time password from a file)
+  
 ## Donating:
 Help me pay for prototyping costs by becoming a sponsor or using the referal links on the BOM list
 
 ## License:
-the ORCA Project is MIT licensed.
+the ORCA Project is [MIT licensed](https://github.com/Rumidom/ORCA_multitool/blob/main/LICENSE).
 
