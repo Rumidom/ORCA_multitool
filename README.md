@@ -9,7 +9,7 @@ ORCA (Operational Resilient Computing Asset) is a Opensource portable multitool/
 - Expansion/periferal ports (including STEMMA QT)
 - SX1278 Radio
 - Micro SD card slot
-- real-time clock IC
+- Real-time clock IC
 
 ## ORCA V1
 First version of the PCB had a lot of mistakes, I'm working on a V2, do not recomend using V1 at all. I'm currently developing the firmware on a modded version of the device.
@@ -31,7 +31,7 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - Device Info
 - [x] Displays available/used Ram, available/used Flash, available/used SD Card space, Device MAC Address
 - Cryptograpfy
-- [x] View, Generate, Delete 32 Byte AES keys on the EEPROM
+- [x] View, Generate, Delete 256 bit AES keys on the EEPROM
 - [x] AES File Encryption/Decryption using EEPROM keys
 - NotePad
 - [x] Create, Load, Edit files on the SDCard/Flash
