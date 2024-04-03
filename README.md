@@ -12,7 +12,7 @@ ORCA (Operational Resilient Computing Asset) is a Opensource portable multitool/
 - Real-time clock IC
 
 ## ORCA V1
-First version of the PCB had a lot of mistakes, I'm working on a V2, do not recomend using V1 at all. I'm currently developing the firmware on a modded version of the device.
+First version of the PCB had a lot of mistakes, I'm working on a V2, do not recomend using V1 at all. I'm currently developing the firmware on a modded version of the device. (PCBs and schematics are available for V2 but have not been tested yet)
 
 <p align="center">
 <img src='./Photos/ORCA V1.png' width='600'>
@@ -53,6 +53,7 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - [ ] SSID Scanner/Signal Strength Meter
 - ESP-NOW Tools
 - IR Tools
+  [ ] TV-B-Gone
 - Bluetooth Tools
 - Games
 - [ ] Space invaders
@@ -61,7 +62,7 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - [ ] OTP Generator (Creates a time based one time password from a file)
   
 ## Donating:
-Help me pay for prototyping costs by becoming a sponsor or using the referal links on the BOM list
+Help me pay for prototyping costs by becoming a sponsor or using the referal links in the BOM list
 
 ## License:
 the ORCA Project is [MIT licensed](https://github.com/Rumidom/ORCA_multitool/blob/main/LICENSE).
