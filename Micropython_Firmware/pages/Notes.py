@@ -1,15 +1,12 @@
 import time,os
-import Config
-import Cryptography
-from Cryptography import GetKeyFromEEPROM,DecryptBytearraytoString,EncryptBytearray,AutoGenerateKeyOnEmptySlot
-import Popups
+import Crypto,Config
+import Popups,UI
 import fontlib
-import UI
 from Control import UserControl
 
 class Notepad(UserControl):
     def __init__(self,lcd,uart_,sd,i2c,FilePath = None):
-        self.eep = Cryptography.Geteep(lcd,i2c)
+        self.eep = Crypto.Geteep(lcd,i2c)
         self.lcd = lcd
         self.uart = uart_
         self.sd = sd
@@ -36,12 +33,12 @@ class Notepad(UserControl):
             except:
                 self.keyslot = None
             if self.keyslot != None and self.keyslot < 1024:
-                self.key = GetKeyFromEEPROM(self.lcd,self.keyslot,self.eep)
+                self.key = Crypto.GetKeyFromEEPROM(self.lcd,self.keyslot,self.eep)
                 print(self.FilePath)
                 f = open(self.FilePath,"rb")
                 data = f.read()
                 f.close
-                self.LineList = DecryptBytearraytoString(data,self.key,self.keyslot).splitlines(True)
+                self.LineList = Crypto.DecryptBytearraytoString(data,self.key,self.keyslot).splitlines(True)
             else:
                 f = open(self.FilePath)
                 data = f.read()
@@ -138,16 +135,16 @@ class Notepad(UserControl):
                         Use_Key_=  Popups.OptionChoice(self.lcd,self.uart,("Which key should","be used?"),("Dfault","Auto")) 
                 if Enc_ == "Yes":
                     if Use_Key_ == "Auto":
-                        self.key,self.keyslot = AutoGenerateKeyOnEmptySlot(self.lcd,self.eep)
+                        self.key,self.keyslot = Crypto.AutoGenerateKeyOnEmptySlot(self.lcd,self.eep)
                     elif Use_Key_ == "Dfault":
                         self.keyslot = int(self.DConfig['DefaultKey'])
-                        self.key = GetKeyFromEEPROM(self.lcd,self.keyslot,self.eep)
+                        self.key = Crypto.GetKeyFromEEPROM(self.lcd,self.keyslot,self.eep)
                     Popups.Splash(self.lcd,["Encrypting With","key: "+str(self.keyslot)])
                     FileNdot = self.FilePath.split('[')[0].split('.')
                     self.FilePath = FileNdot[0] +"[({})]".format(self.keyslot)
                     if len(FileNdot) > 1:
                         self.FilePath+'.'+FileNdot[-1]
-                    data = EncryptBytearray(data,self.key,self.keyslot)
+                    data = Crypto.EncryptBytearray(data,self.key,self.keyslot)
             with open(self.FilePath, 'w') as f:
                 print("Saving to: ",self.FilePath)
                 f.write(data)

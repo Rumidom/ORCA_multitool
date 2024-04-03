@@ -56,7 +56,6 @@ class ClassName(UserControl):
     def Run(self):
         while True:
             self.DrawFunction()
-            self.CheckKeyPress()
             r = self.CheckKeyPress()
             if r != None:
                 return r

@@ -1,5 +1,6 @@
 import fontlib,UI
 import utime
+import os,time,math,gc,utime,network
 
 def DisplayCenteredLines(lcd,lines,ydist = 9):
     for i,line in enumerate(lines):
@@ -76,3 +77,26 @@ def TextInput(lcd,uart1,lines):
                 print("Not Unicode: ",e)
             
         DrawTextInput(lcd,lines,Input=Input)
+
+def DisplayDeviceInfo(lcd,uart1):
+    #print("Device info")
+    lcd.fill(0)
+    wlan=network.WLAN()
+    MacAdr = wlan.config('mac').hex().upper()
+    fs_stat = os.statvfs("/")
+    KB = 1024
+    MB = 1024 * 1024
+    totalram = (gc.mem_free() + gc.mem_alloc())
+    usedram = gc.mem_alloc()
+    flashsize = fs_stat[1] * fs_stat[2]
+    freeflash = fs_stat[1] * fs_stat[2]
+    usedflash = flashsize - freeflash
+    fontlib.printstring("Mpython "+ os.uname()[3].split(" ")[0],0,0,0,lcd.fbuf)
+    fontlib.printstring("MAC:"+ MacAdr,0,10,0,lcd.fbuf)
+    fontlib.printstring("Disk:{:.2f}|{:.2f}MB".format(usedflash / MB,flashsize / MB),0,20,0,lcd.fbuf)
+    fontlib.printstring("Ram:{:.2f}|{:.2f}MB".format(usedram / MB,totalram / MB),0,30,0,lcd.fbuf)
+    lcd.show()
+    while True:
+        if (uart1.any()>0): # exit on any key
+            w = uart1.read()
+            break

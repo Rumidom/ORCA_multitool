@@ -2,7 +2,7 @@ import framebuf,time,math,random,gc,utime,network
 import pcd8544,fontlib
 from machine import Pin,SPI,SoftSPI,I2S,I2C,UART,SDCard
 from sx127x import SX127x
-import Cryptography,Popups,Notes,Config,Files,Lora
+import Menu,Crypto,Popups,Notes,Config,Files,Lora
 import UI
 
 spi  = SPI(2, sck=Pin(13), mosi=Pin(11), miso=Pin(12))
@@ -37,66 +37,6 @@ backlight.off()
 
 Lora_NSS = Pin(5, Pin.OUT)
 Lora_NSS.on()
-                
-def DrawMenu(MenuOptions,SelectedIndex,maxrows = 7):
-    lcd.fill(0)
-    menupos = 0
-    if (SelectedIndex > (maxrows-1)):
-        menupos = SelectedIndex - (maxrows-1)
-        SelectedIndex = (maxrows-1)
-        
-    for i,item in enumerate(MenuOptions[menupos:maxrows+menupos]):
-        if i == SelectedIndex:
-            fontlib.printstring(item,3,i*7,0,lcd.fbuf,font = "five",invert = True)
-        else:
-            fontlib.printstring(item,3,i*7,0,lcd.fbuf,font = "five")
-    lcd.show()
-    
-
-def RunMenu(MenuOptions):
-    MenuLen = len(MenuOptions)
-    selected_index = 0
-    while True:
-        if (uart1.any()>0):
-            w = uart1.read()
-            if w == b'\xab': #>>
-                if selected_index < (MenuLen-1):
-                    selected_index += 1
-            if w == b'\n': #Ok/Enter
-                return(MenuOptions[selected_index])
-            if w == b'\xbb': #<<
-                if selected_index > 0:
-                    selected_index -= 1
-            if w == b'\x7f': #DEL
-                return("DELETE")
-            if w == b'\x1b': #ESC
-                return("ESCAPE")
-        DrawMenu(MenuOptions,selected_index)
-
-def DisplayDeviceInfo():
-    #print("Device info")
-    lcd.fill(0)
-    wlan=network.WLAN()
-    MacAdr = wlan.config('mac').hex().upper()
-    fs_stat = os.statvfs("/")
-    KB = 1024
-    MB = 1024 * 1024
-    totalram = (gc.mem_free() + gc.mem_alloc())
-    usedram = gc.mem_alloc()
-    flashsize = fs_stat[1] * fs_stat[2]
-    freeflash = fs_stat[1] * fs_stat[2]
-    usedflash = flashsize - freeflash
-    fontlib.printstring("Mpython "+ os.uname()[3].split(" ")[0],0,0,0,lcd.fbuf)
-    fontlib.printstring("MAC:"+ MacAdr,0,10,0,lcd.fbuf)
-    fontlib.printstring("Disk:{:.2f}|{:.2f}MB".format(usedflash / MB,flashsize / MB),0,20,0,lcd.fbuf)
-    fontlib.printstring("Ram:{:.2f}|{:.2f}MB".format(usedram / MB,totalram / MB),0,30,0,lcd.fbuf)
-    lcd.show()
-    while True:
-        if (uart1.any()>0): # exit on any key
-            w = uart1.read()
-            break
-        
-
         
 
 lcd.fill(0)
@@ -109,7 +49,7 @@ uart1.init()
 #time.sleep(2)
 
 
-#MainMenuOptions = ["Serial Tools","I2C Tools","LORA Tools","Bluetooth Tools","ESP-now","NotePad","File Explorer","Cryptography","Device Config","Device Info"]
+#MainMenuOptions = ["Serial Tools","I2C Tools","LORA Tools","Bluetooth Tools","ESP-now","NotePad","File Explorer","Crypto.graphy","Device Config","Device Info"]
 MainMenuOptions = ["LORA Tools","NotePad","File Explorer","Cryptography","Device Config","Device Info"]
 Serialtools = ["Serial Monitor","Serial Config"]
 I2Ctools = ["I2C Scanner","I2C Screen Tester"]
@@ -120,19 +60,26 @@ CryptographyOptions = ["Key Viewer","Export Keyfile","Import Keyfile","Erase All
 #lcd.show()
 
 while True:
-    MainMenuSelected = RunMenu(MainMenuOptions)
+    MainMenu = Menu.Menu(lcd,uart1,MainMenuOptions)
+    MainMenuSelected = MainMenu.Run()
+    
     if (MainMenuSelected == "Serial Tools"):
         pass
+    
     if (MainMenuSelected == "I2C Tools"):
         pass
+    
     if (MainMenuSelected == "LORA Tools"):
-        LORAtoolsSelected = RunMenu(LoratoolsOptions)
+        LORAMenu = Menu.Menu(lcd,uart1,LoratoolsOptions)
+        LORAtoolsSelected = LORAMenu.Run()
         if (LORAtoolsSelected == "LORA Monitor"):
             LoraMonitor = Lora.LoraMonitor(lcd,uart_,sx127x)
             LoraMonitor.Run()
+            
     if (MainMenuSelected == "NotePad"):
         Notepad = Notes.Notepad(lcd,uart1,sd,i2c,FilePath = None)
         Notepad.Run()
+        
     if (MainMenuSelected == "File Explorer"):
         FileExplorer = Files.FileExplorer(lcd,uart1,sd)
         fileAction,filepath = FileExplorer.Run()
@@ -141,13 +88,17 @@ while True:
             Notepad.Run()
         if fileAction == "Delete":
             Files.DeleteFile(sd,filepath)
+            
     if (MainMenuSelected == "Cryptography"):
-        CryptographySelected = RunMenu(CryptographyOptions)
+        CryptoMenu = Menu.Menu(lcd,uart1,CryptographyOptions)
+        CryptographySelected = CryptoMenu.Run()
         if CryptographySelected == "Key Viewer":
             KeysBrowser = Cryptography.KeysBrowser(lcd,uart1,i2c)
             KeysBrowser.Run()
+            
     if (MainMenuSelected == "Device Info"):
-        DisplayDeviceInfo()
+        Popups.DisplayDeviceInfo(lcd,uart1)
+        
     if (MainMenuSelected == "Device Config"):
         DeviceConfig = Config.DeviceConfig(lcd,uart1)
         DeviceConfig.Run()
