@@ -55,7 +55,7 @@ First version of the PCB had a lot of mistakes, I'm working on a V2, do not reco
 - [ ] SSID Scanner/Signal Strength Meter
 - ESP-NOW Tools
 - IR Tools
-  [ ] TV-B-Gone
+- [ ] TV-B-Gone
 - Bluetooth Tools
 - Games
 - [ ] Space invaders
