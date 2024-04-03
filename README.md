@@ -1,5 +1,5 @@
 <p align="center">
-<img src='./Logos/logo ORCA Multitool.png' width='400'>
+<img src='./Logos/logo ORCA Multitool.png' width='200'>
 </p>
 
 ORCA (Operational Resilient Computing Asset) is a Opensource portable multitool/cyberdeck. Whether you need a mission logger, send a message back to Star Command or just diagnose broken critical space hardware this device got you covered.
