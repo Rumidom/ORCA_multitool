@@ -109,7 +109,8 @@ uart1.init()
 #time.sleep(2)
 
 
-MainMenuOptions = ["Serial Tools","I2C Tools","LORA Tools","Bluetooth Tools","ESP-now","NotePad","File Explorer","Cryptography","Device Config","Device Info","Remove SDCard"]
+#MainMenuOptions = ["Serial Tools","I2C Tools","LORA Tools","Bluetooth Tools","ESP-now","NotePad","File Explorer","Cryptography","Device Config","Device Info"]
+MainMenuOptions = ["LORA Tools","NotePad","File Explorer","Cryptography","Device Config","Device Info"]
 Serialtools = ["Serial Monitor","Serial Config"]
 I2Ctools = ["I2C Scanner","I2C Screen Tester"]
 LoratoolsOptions = ["LORA Monitor","LORA Mensager"]
@@ -140,7 +141,6 @@ while True:
             Notepad.Run()
         if fileAction == "Delete":
             Files.DeleteFile(sd,filepath)
-            
     if (MainMenuSelected == "Cryptography"):
         CryptographySelected = RunMenu(CryptographyOptions)
         if CryptographySelected == "Key Viewer":
