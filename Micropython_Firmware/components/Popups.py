@@ -1,4 +1,4 @@
-import fontlib,Buttons
+import fontlib,UI
 import utime
 
 def DisplayCenteredLines(lcd,lines,ydist = 9):
@@ -21,12 +21,12 @@ def Splash(lcd,lines,font = "five",time = 2000):
     
 def DrawOptionChoice(lcd,index,lines,Options):
     lcd.fill(0)
-    if Options[0] != None and Options[1] == None:
-        Buttons.DrawButton(lcd,24,25,Options[0],selected = (index == 0))
-    if Options[0] != None and Options[1] != None:
-        Buttons.DrawButton(lcd,6,25,Options[0],selected = (index == 0))
-    if Options[0] != None:
-        Buttons.DrawButton(lcd,43,25,Options[1],selected = (index == 1))
+    pos = ((6,25),(43,25),(24,35))
+    if len(Options) > 1:
+        for i,Option in enumerate(Options):
+            UI.DrawButton(lcd,pos[i][0],pos[i][1],Options[i],selected = (index == i))
+    else:
+        UI.DrawButton(lcd,24,25,Options[0],selected = (index == 0))
     DisplayCenteredLines(lcd,lines)
     lcd.show()
     
@@ -36,7 +36,7 @@ def OptionChoice(lcd,uart1,lines,Options):
         if (uart1.any()>0):
             w = uart1.read()
             if w == b'\xab' and Options[1] != None: #>>
-                if selected_index < 1:
+                if selected_index < len(Options)-1:
                     selected_index += 1
             if w == b'\n': #ok
                 return(Options[selected_index])

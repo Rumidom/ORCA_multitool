@@ -97,8 +97,8 @@ def DecryptBytearray(data,Key,Keynum):
         IV = decrypted_PreXOR
     return plain_text
 
-def DecryptBytearraytoString(data,Key):
-    return DecryptBytearray(data,Key).decode().rstrip('\x00')
+def DecryptBytearraytoString(data,Key,Keynum):
+    return DecryptBytearray(data,Key,Keynum).decode().rstrip('\x00')
 
 
 class KeyWindow(UserControl):

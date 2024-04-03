@@ -2,7 +2,7 @@ import framebuf,time,math,random,gc,utime,network
 import pcd8544,fontlib
 from machine import Pin,SPI,SoftSPI,I2S,I2C,UART,SDCard
 from sx127x import SX127x
-import Cryptography,Popups,Notepad,Config,Files,Lora
+import Cryptography,Popups,Notes,Config,Files,Lora
 import UI
 
 spi  = SPI(2, sck=Pin(13), mosi=Pin(11), miso=Pin(12))
@@ -37,18 +37,6 @@ backlight.off()
 
 Lora_NSS = Pin(5, Pin.OUT)
 Lora_NSS.on()
-
-def receive(lora):
-    print("LoRa Receiver")
-
-    while True:
-        if lora.receivedPacket():
-            try:
-                payload = lora.readPayload().decode()
-                rssi = lora.packetRssi()
-                print("RX: {} | RSSI: {}".format(payload, rssi))
-            except Exception as e:
-                print(e)
                 
 def DrawMenu(MenuOptions,SelectedIndex,maxrows = 7):
     lcd.fill(0)
@@ -108,23 +96,7 @@ def DisplayDeviceInfo():
             w = uart1.read()
             break
         
-def PrintWrapedText(text_string,Screen_Width,CharSize):
-    Max_char = int(Screen_Width/CharSize)
-    lcd.fill(0)
-    lines = []
-    current_line = ""
-    for char in text_string:
-        current_line += char
-        if len(current_line) >= Max_char:
-            lines.append(current_line)
-            current_line = ""
-    if len(current_line) > 0:
-        lines.append(current_line)
-    for i,line in enumerate(lines):
-        #lcd.text(line, 0, i*10, 1)
-        fontlib.printstring(line,0,i*6,0,lcd,font = "five")
-    
-    lcd.show()
+
         
 
 lcd.fill(0)
@@ -143,18 +115,9 @@ I2Ctools = ["I2C Scanner","I2C Screen Tester"]
 LoratoolsOptions = ["LORA Monitor","LORA Mensager"]
 CryptographyOptions = ["Key Viewer","Export Keyfile","Import Keyfile","Erase All Keys"]
 
-#LoraMonitor = Lora.LoraMonitor(lcd,uart1,sx127x)
-#LoraMonitor.Run()
-#FileExplorer = Files.FileExplorer(lcd,uart1,sd)
-#FileExplorer.Run()
-#KeysBrowser = Cryptography.KeysBrowser(lcd,uart1,i2c)
-#KeysBrowser.Run()
-#DeviceConfig = Config.DeviceConfig(lcd,uart1)
-#DeviceConfig.Run()
-Notepad = Notepad.Notepad(lcd,uart1,sd,FilePath = None)
-Notepad.Run()
+
 #lcd.show()
-'''
+
 while True:
     MainMenuSelected = RunMenu(MainMenuOptions)
     if (MainMenuSelected == "Serial Tools"):
@@ -162,19 +125,29 @@ while True:
     if (MainMenuSelected == "I2C Tools"):
         pass
     if (MainMenuSelected == "LORA Tools"):
-        pass
+        LORAtoolsSelected = RunMenu(LoratoolsOptions)
+        if (LORAtoolsSelected == "LORA Monitor"):
+            LoraMonitor = Lora.LoraMonitor(lcd,uart_,sx127x)
+            LoraMonitor.Run()
     if (MainMenuSelected == "NotePad"):
-        Notepad.RunNotePad(lcd,uart1,sd,FilePath = None)
+        Notepad = Notes.Notepad(lcd,uart1,sd,i2c,FilePath = None)
+        Notepad.Run()
     if (MainMenuSelected == "File Explorer"):
-        fileAction,filepath = FileExplorer.Run(lcd,uart1,sd)
+        FileExplorer = Files.FileExplorer(lcd,uart1,sd)
+        fileAction,filepath = FileExplorer.Run()
         if fileAction == "Edit":
-            Notepad.RunNotePad(lcd,uart1,sd,FilePath = filepath)
+            Notepad = Notes.Notepad(lcd,uart1,sd,i2c,FilePath = filepath)
+            Notepad.Run()
+        if fileAction == "Delete":
+            Files.DeleteFile(sd,filepath)
+            
     if (MainMenuSelected == "Cryptography"):
         CryptographySelected = RunMenu(CryptographyOptions)
         if CryptographySelected == "Key Viewer":
-            Cryptography.RunKeyViewer(lcd,uart1)
+            KeysBrowser = Cryptography.KeysBrowser(lcd,uart1,i2c)
+            KeysBrowser.Run()
     if (MainMenuSelected == "Device Info"):
         DisplayDeviceInfo()
     if (MainMenuSelected == "Device Config"):
-        Config.RunDeviceConfig(lcd,uart1)
-'''
+        DeviceConfig = Config.DeviceConfig(lcd,uart1)
+        DeviceConfig.Run()

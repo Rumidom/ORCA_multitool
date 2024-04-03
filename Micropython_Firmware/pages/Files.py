@@ -9,7 +9,19 @@ def isFolder(path):
         return(True)
     except:
         return(False)
-
+    
+def DeleteFile(sd,filepath):
+    split = filepath.split("/")
+    print("removing ", filepath)
+    if len(split)>1:
+        if split[0] == "sd" or split[1] == "sd":
+            vfs = os.VfsFat(sd)
+            os.mount(vfs, "/sd")
+            os.remove(filepath)
+            os.umount("/sd")
+    else:
+        os.remove(filepath)
+        
 class FileExplorer(UserControl):
     def __init__(self,lcd,uart_,sd):
         self.uart = uart_
@@ -41,9 +53,9 @@ class FileExplorer(UserControl):
     def Ok_Func(self):
         extension = self.FileList[self.FileIndex].split(".")[-1]
         if extension in self.extensionOptions:
-            self.FileOptions = self.extensionOptions[extension]
+            self.FileOptions = self.extensionOptions[extension]+["Move","Delete","Rename"]
         else:
-            self.FileOptions = self.extensionOptions["Default"]
+            self.FileOptions = self.extensionOptions["Default"]+["Move","Delete","Rename"]
         if self.MenuActive:
             if self.Dir_Ans == "SD":
                 os.umount("/sd")

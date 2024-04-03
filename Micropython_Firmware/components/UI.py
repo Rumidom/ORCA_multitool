@@ -95,3 +95,20 @@ def DrawScrollBar(lcd,posx,posy,index,linesnum,ScreenMaxLines=4,Bartotal = 64):
         
 def DrawCursor(lcd,xi,yi,charwidth = 5,lineheight=7,spce=0,selected = False):
     fontlib.printstring("|",(charwidth+spce)*xi+1,(lineheight*yi),0,lcd.fbuf,invert = selected)
+    
+def PrintWrapedText(lcd,text_string,xi,yi,Screen_Width=84,charwidth = 5,lineheight=7,spce=0):
+    Max_char = int(Screen_Width//charwidth)
+    lcd.fill(0)
+    lines = []
+    current_line = ""
+    for char in text_string:
+        current_line += char
+        if len(current_line) >= Max_char:
+            lines.append(current_line)
+            current_line = ""
+    if len(current_line) > 0:
+        lines.append(current_line)
+    for i,line in enumerate(lines):
+        #lcd.text(line, 0, i*10, 1)
+        fontlib.printstring(line,(charwidth+spce)*xi+1,(lineheight*yi),0,lcd,font = "five")
+    lcd.show()    
