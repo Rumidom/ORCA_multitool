@@ -1,13 +1,96 @@
-import UI
+import UI,Popups
 from Control import UserControl
 import fontlib
 import utime
+import Crypto
 
-class LoraMonitor(UserControl):
-    def __init__(self,lcd,uart_,sx127x):
+class LoraPacketWindow(UserControl):
+    def __init__(self,lcd,uart_,eep,PacketIndex,PacketData,RSSI):
         self.lcd = lcd
         self.uart = uart_
-        self.sx127x =sx127x
+        self.eep = eep
+        self.PacketIndex = PacketIndex
+        self.PacketLen = len(PacketData)
+        self.TotalLines = self.PacketLen//7
+        self.PacketData = PacketData
+        self.PacketRSSI = RSSI
+        self.lineindex = 0
+        self.Decode = False
+        self.ShowMenu = False
+        self.MenuIndex = 0
+        self.PossibleMenus = [["Export","Delete","Decode"],["Export","Delete","Hex"]]
+        self.Menubuttons = self.PossibleMenus[0]
+        self.MenuLen = 3
+        
+    def Ok_Func(self):
+        if self.ShowMenu:
+            if self.Decode:
+                self.Menubuttons = self.PossibleMenus[1]
+                Option = self.Menubuttons[self.MenuIndex]
+            else:
+                self.Menubuttons = self.PossibleMenus[0]
+                Option = self.Menubuttons[self.MenuIndex]
+            if Option == 'Export':
+                return('Export')
+            if Option == 'Delete':
+                Q_Ans = Popups.OptionChoice(self.lcd,self.uart,("Are you sure?","Cant be reversed"),('Yep','Cancel'))
+                if Q_Ans == 'Yep':
+                    return("DELETE")
+            if Option == 'Decode':
+                self.Decode = True
+            if Option == 'Hex':
+                self.Decode = False
+        else:
+            self.ShowMenu = True
+            
+    def Left_Func(self):
+        if self.ShowMenu:
+            if self.MenuIndex > 0:
+                self.MenuIndex -= 1
+        else:     
+            if self.lineindex > 0 :
+                self.lineindex -= 1
+            
+    def Right_Func(self):
+        if self.ShowMenu:
+            if self.MenuIndex < self.MenuLen - 1:
+                self.MenuIndex += 1        
+        else:
+            if self.lineindex < self.TotalLines and self.PacketLen > 7*4:
+                self.lineindex += 1
+            
+    def ESC_Func(self):
+        if self.ShowMenu:
+            self.ShowMenu = False
+        else:
+            return("ESCAPE")
+    
+    def DEL_Func(self):
+        Q_Ans = Popups.OptionChoice(self.lcd,self.uart,("Are you sure?","Cant be reversed"),('Yep','Cancel'))
+        if Q_Ans == Delete:
+            return("DELETE")
+
+    def DrawKeyWindow(self):
+        self.lcd.fill(0)
+        UI.DrawPacketWindow(self.lcd,self.PacketData,self.PacketRSSI,self.PacketLen,self.lineindex,decode=self.Decode,MaxLines = 4)
+        if self.ShowMenu:
+            UI.BottomMenu(self.lcd,self.Menubuttons,self.MenuIndex)
+        self.lcd.show()
+            
+    def Run(self):
+        while True:
+            self.DrawKeyWindow()
+            r = self.CheckKeyPress()
+            if r != None:
+                return r
+            
+class LoraMonitor(UserControl):
+    def __init__(self,lcd,uart_,i2c,sx127x):
+        self.lcd = lcd
+        self.uart = uart_
+        self.i2c = i2c
+        self.eep = Crypto.Geteep(self.lcd,self.i2c)
+        self.sx127x = sx127x
         self.PacketList = []
         self.PacketNum = 0
         self.PacketIndex = 0
@@ -15,11 +98,16 @@ class LoraMonitor(UserControl):
         self.scroll = 0
         self.MaxPacketsPerScreen = 4
         self.initTime = utime.ticks_ms()
-        self.MaxCharsPerLine = 14
         self.AutoRoll = True
+        self.ShowPacket = False
+        
     def Ok_Func(self):
-        pass
-    
+        PacketWindow = LoraPacketWindow(self.lcd,self.uart,self.eep,self.PacketIndex,self.PacketList[self.PacketIndex][1],self.PacketList[self.PacketIndex][0])
+        resp = PacketWindow.Run()
+        if resp == "DELETE":
+            del self.PacketList[self.PacketIndex]
+            if self.PacketIndex > 0:
+                self.PacketIndex -= 1
     def Left_Func(self):
         self.scroll = 0
         self.AutoRoll = False
@@ -27,7 +115,7 @@ class LoraMonitor(UserControl):
             self.PacketIndex -= 1
             if (self.PacketIndex == self.Pindex-1):
                 self.Pindex -= 1
-                
+        
     def Right_Func(self):
         self.scroll = 0
         self.AutoRoll = False
@@ -43,29 +131,15 @@ class LoraMonitor(UserControl):
         return("DELETE")
     
     def DrawLoraMonitor(self):
+        if (utime.ticks_ms()-self.initTime > 500):
+            self.initTime = utime.ticks_ms()
+            self.scroll += 1
+        if self.scroll > 1000:
+            self.scroll = 0
         self.lcd.fill(0)
-        for i,packet in enumerate(self.PacketList[self.Pindex:self.Pindex+4]):
-            icon = " "
-            payload = packet[1]
-            if packet[0] >= -40:
-                icon = "k"
-            elif packet[0] < -40 and packet[0] >-100:
-                icon = "l"
-            elif packet[0] <= -110:
-                icon = "M"
-            if (i == self.PacketIndex-self.Pindex):
-                payload = packet[1][self.scroll:self.scroll+self.MaxCharsPerLine]
-                if (utime.ticks_ms()-self.initTime > 500):
-                    self.initTime = utime.ticks_ms()
-                    self.scroll += 1
-            if self.scroll > len(packet[1])-self.MaxCharsPerLine:
-                self.scroll = 0
-            j = i+self.Pindex
-            UI.DrawIconIndexMenuOption(self.lcd,i,j,payload.decode(),icon=icon,posx=3,selected = (i == self.PacketIndex-self.Pindex))
-
-        UI.DrawScrollBar(self.lcd,10,40,self.PacketIndex,self.PacketNum)
+        UI.DrawPacketMonitor(self.lcd,self.PacketList,self.PacketIndex,self.Pindex,self.scroll)
         self.lcd.show()
-
+        
     def CallbackFunction(self,radio_Obj, payload):
             try:
                 #payload = self.sx127x.readPayload()

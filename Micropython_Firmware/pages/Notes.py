@@ -171,7 +171,7 @@ class Notepad(UserControl):
             self.cursorBlink = not self.cursorBlink
             self.inittime = time.ticks_ms()
         if self.cursorBlink:
-            UI.DrawCursor(self.lcd,self.cursorPos-self.WindowPos_x,self.cursorLine-self.WindowPos_y)
+            UI.Cursor(self.lcd,self.cursorPos-self.WindowPos_x,self.cursorLine-self.WindowPos_y)
         for i,Line in enumerate(self.LineList[self.WindowPos_y:self.screen_maxlines-self.WindowPos_y]):
             if Line != '':
                 if Line[-1] == "\n":

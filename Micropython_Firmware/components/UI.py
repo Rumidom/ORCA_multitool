@@ -1,5 +1,6 @@
 import fontlib
 import math
+import Helpers
 
 def BottomMenu(lcd,buttons,indexpos,MenuActive = True):
     Pairs = []
@@ -79,9 +80,9 @@ def DrawMenuNumberInput(lcd,yi,text,num = "",selected=False,change = False):
     fontlib.printstring(text,3,(10*yi)+2,0,lcd.fbuf,font = "five",invert = selected)
     fontlib.printstring(num,62,(10*yi)+2,0,lcd.fbuf,font = "five",invert = change)
 
-def DrawScrollBar(lcd,posx,posy,index,linesnum,ScreenMaxLines=4,Bartotal = 64):
+def DrawScrollBar(lcd,posx,posy,index,lineslen,ScreenMaxLines=4,Bartotal = 64):
 
-    chunks = math.ceil(linesnum/ScreenMaxLines)
+    chunks = math.ceil(lineslen/ScreenMaxLines)
     if chunks == 0:
         chunks = 1
     chunkSize = Bartotal/chunks
@@ -89,16 +90,15 @@ def DrawScrollBar(lcd,posx,posy,index,linesnum,ScreenMaxLines=4,Bartotal = 64):
         chunkSize = 2
     remainder = Bartotal-chunks*chunkSize
     thumbx = posx+math.ceil((index//ScreenMaxLines)*chunkSize)
-    if linesnum > ScreenMaxLines:
+    if lineslen > ScreenMaxLines:
         lcd.fill_rect(thumbx, posy, math.ceil(chunkSize+remainder), 4, 1)
         lcd.rect(posx, posy, Bartotal, 4, 1)
         
-def DrawCursor(lcd,xi,yi,charwidth = 5,lineheight=7,spce=0,selected = False):
+def Cursor(lcd,xi,yi,charwidth = 5,lineheight=7,spce=0,selected = False):
     fontlib.printstring("|",(charwidth+spce)*xi+1,(lineheight*yi),0,lcd.fbuf,invert = selected)
     
 def PrintWrapedText(lcd,text_string,xi,yi,Screen_Width=84,charwidth = 5,lineheight=7,spce=0):
     Max_char = int(Screen_Width//charwidth)
-    lcd.fill(0)
     lines = []
     current_line = ""
     for char in text_string:
@@ -111,4 +111,39 @@ def PrintWrapedText(lcd,text_string,xi,yi,Screen_Width=84,charwidth = 5,lineheig
     for i,line in enumerate(lines):
         #lcd.text(line, 0, i*10, 1)
         fontlib.printstring(line,(charwidth+spce)*xi+1,(lineheight*yi),0,lcd,font = "five")
-    lcd.show()    
+
+def DrawPacketWindow(lcd,Packetdata,PacketRSSI,PacketNum,lineindex,decode=False,MaxLines = 5):
+    hexdata = Packetdata.hex()
+    decodeddata = Helpers.ASCII_Decode(Packetdata)
+    bytesPerLine = 7
+    bytesnum = len(hexdata)//2
+    linesnum = bytesnum//bytesPerLine
+    fontlib.printstring("S:"+str(bytesnum)+" RSSI:"+str(PacketRSSI),3,0,0,lcd.fbuf)
+    for i in range(bytesPerLine):
+        for j in range(lineindex,MaxLines+lineindex):
+            bindex = (i+bytesPerLine*j)
+            if bindex*2+2 <= len(hexdata):
+                if decode:
+                    fontlib.printstring(decodeddata[bindex],i*12+1,j*7+7-lineindex*7,0,lcd.fbuf)                
+                else:
+                    fontlib.printstring(hexdata[bindex*2:bindex*2+2],i*12+1,j*7+7-lineindex*7,0,lcd.fbuf)
+    DrawScrollBar(lcd,10,42,lineindex+4,linesnum,ScreenMaxLines=5)
+    
+def DrawPacketMonitor(lcd,PacketList,PacketIndex,Pindex,scroll,MaxCharsPerLine=14):
+    for i,packet in enumerate(PacketList[Pindex:Pindex+4]):
+        icon = " "
+        payload = packet[1]
+        if packet[0] >= -40:
+            icon = "k"
+        elif packet[0] < -40 and packet[0] >-100:
+            icon = "l"
+        elif packet[0] <= -110:
+            icon = "M"
+        if (i == PacketIndex-Pindex):
+            scroll = scroll%(len(packet[1])-MaxCharsPerLine)
+            payload = packet[1][scroll:scroll+MaxCharsPerLine]
+        j = i+Pindex
+        DrawIconIndexMenuOption(lcd,i,j,Helpers.ASCII_Decode(payload),icon=icon,posx=3,selected = (i == PacketIndex-Pindex))
+
+    DrawScrollBar(lcd,10,40,PacketIndex,len(PacketList))
+

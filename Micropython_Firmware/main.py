@@ -57,8 +57,10 @@ LoratoolsOptions = ["LORA Monitor","LORA Mensager"]
 CryptographyOptions = ["Key Viewer","Export Keyfile","Import Keyfile","Erase All Keys"]
 
 
-#lcd.show()
+LoraMonitor = Lora.LoraMonitor(lcd,uart1,i2c,sx127x)
+LoraMonitor.Run()
 
+'''
 while True:
     MainMenu = Menu.Menu(lcd,uart1,MainMenuOptions)
     MainMenuSelected = MainMenu.Run()
@@ -102,3 +104,4 @@ while True:
     if (MainMenuSelected == "Device Config"):
         DeviceConfig = Config.DeviceConfig(lcd,uart1)
         DeviceConfig.Run()
+'''

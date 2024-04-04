@@ -15,7 +15,7 @@ lcd.show()
 FileList = os.listdir("/")
 File_structure = {"/lib":["bdevice.py","eeprom_i2c.py","pcd8544.py","sx127x.py","fontlib.py","fonts_dictionary.py"],
                   "/pages":["Config.py","Crypto.py","Notes.py","Files.py","Lora.py","Menu.py"],
-                  "/components":["UI.py","Popups.py","Control.py"],
+                  "/components":["UI.py","Popups.py","Control.py","Helpers.py"],
                   "/files":[],
                   "/sd":[]
                   }

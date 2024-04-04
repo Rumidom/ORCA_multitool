@@ -28,9 +28,10 @@ class UserControl():
 
 '''
 class ClassName(UserControl):
-    def __init__(self,lcd,uart_):
+    def __init__(self,lcd,uart_,i2c):
         self.lcd = lcd
         self.uart = uart_
+        self.i2c = i2c
 
     def Ok_Func(self):
         return("OK")
