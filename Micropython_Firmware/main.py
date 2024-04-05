@@ -22,7 +22,8 @@ except:
     print("no SD Card")
 
 
-sx127x = SX127x(spi, pins={'dio_0':6,'ss':5,'reset':7})
+sx127x = SX127x(spi, 5, 7, 433000000, dio_0 = 6)
+
 uart1 = UART(1, baudrate=9600, tx=17, rx=18)
 
 p17 = Pin(17,Pin.OPEN_DRAIN)
