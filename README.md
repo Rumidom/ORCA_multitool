@@ -13,8 +13,8 @@ ORCA (Operational Resilient Computing Asset) is a Opensource portable multitool/
 - Micro SD card slot
 - Real-time clock IC
 
-## ORCA V1
-First version of the PCB had a lot of mistakes, I'm working on a V2, do not recomend using V1 at all. I'm currently developing the firmware on a modded version of the device. (PCBs and schematics are available for V2 but have not been tested yet)
+## ORCA Mk1
+First version of the PCB had a lot of mistakes, I'm working on a Mk2, do not recomend using Mk1 at all. I'm currently developing the firmware on a modded version of the device. (PCBs and schematics are available for V2 but have not been tested yet)
 
 <p align="center">
 <img src='./Photos/ORCA V1.png' width='600'>
