@@ -792,7 +792,7 @@ class SX127x:
             self.writeRegister(
                 REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_RX_SINGLE
             )
-
+        self.ClearIRQFlags()
         self.collectGarbage()
         return True
 
