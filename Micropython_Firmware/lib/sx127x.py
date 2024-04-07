@@ -83,10 +83,13 @@ RegAfcFei = const(0x1a)
 #BIT 1 AfcClear()  Clear AFC register set in Rx mode. Always reads 0.
 #BIT 0 AfcAutoClearOn AFC register is cleared at the beginning of the automatic AFC phase
 
-#RSSI/START TX DATA (FSK / LORA)
-REG_FIFO_TX_BASE_ADDR = const(0x0E)
 
-#RSSI COLLISION DETECTOR/START RX DATA (FSK / LORA)
+#RSSI CONFIG/START TX DATA (FSK/LORA)
+REG_FIFO_TX_BASE_ADDR = const(0x0E)
+REG_FSK_RSSI_CONFIG1 = const(0x0D)
+REG_FSK_RSSI_CONFIG2 = const(0x0E)
+
+#RSSI COLLISION DETECTOR/START RX DATA (FSK/LORA)
 REG_FIFO_RX_BASE_ADDR = const(0x0F)
 
 #RSSI THRESHOLD CONTROL/START ADDRESS OF LAST PACKET RECEIVED (FSK / LORA)
@@ -300,10 +303,10 @@ class SX127x:
         self.RadioMode = RadioMode
         
         
-        self.OpModes = [['SLEEP','STDBY','FSTX',"TX","FSRX","RX"],
-                        ['SLEEP','STDBY','FSTX',"TX","FSRX","RXCONT","RXSING","CAD"]]
+        self.OpModes = [['SLEEP','STDBY','FSTX','TX','FSRX','RX'],
+                        ['SLEEP','STDBY','FSTX','TX','FSRX','RXCONT','RXSING','CAD']]
         
-        self.RadioModes = ["FSK","LORA","OOK"]
+        self.RadioModes = ['FSK','LORA','OOK']
         
         #perform reset
         self.pin_rst.off()
@@ -320,7 +323,7 @@ class SX127x:
         # debug output
         print("SX version: {}".format(self.version))
 
-        # put in LoRa and sleep mode
+        # put in sleep mode
         self.SetTransceiverMode('SLEEP')
 
         # set radio mode
@@ -339,9 +342,7 @@ class SX127x:
             
         self.SetTransceiverMode('STDBY')
         
-        # set base addresses
-        self.writeRegister(REG_FIFO_TX_BASE_ADDR, 0x00)
-        self.writeRegister(REG_FIFO_RX_BASE_ADDR, 0x00)
+
         
     def Lora_Init(self):
         
@@ -351,6 +352,9 @@ class SX127x:
         # set auto AGC (automatic gain control, negates LNA boost setting)
         self.writeRegister(REG_MODEM_CONFIG_3, 0x04)
 
+        # set base addresses
+        self.writeRegister(REG_FIFO_TX_BASE_ADDR, 0x00)
+        self.writeRegister(REG_FIFO_RX_BASE_ADDR, 0x00)
         
         #self.implicitHeaderMode(self.parameters["implicitHeader"])
         #self.setSpreadingFactor(self.parameters["spreading_factor"])
@@ -367,12 +371,13 @@ class SX127x:
         if 1000 / bw / 2 ** sf > 16:
             self.writeRegister(REG_MODEM_CONFIG_3, self.readRegister(REG_MODEM_CONFIG_3) | 0x08)
     
-    def FSK_Init(self,SyncWordComp = False,PreambDetect = False,CheckCRC = False,Continuous= False):
-        self.FSK_SetSyncword_On(SyncWordComp)
-        self.FSK_SetPreamble_On(PreambDetect)
-        self.FSK_SetCRC_On(CheckCRC)
-        self.FSK_SetContinuousMode_On(Continuous)
-        self.FSK_SetPacketFormatVariable(False)
+    def FSK_Init(self,SyncWordComp = False,PreambDetect = False,CheckCRC = False,Continuous= True):
+        self.SetTransceiverMode('STDBY')
+        #self.FSK_SetSyncword_On(SyncWordComp)
+        #self.FSK_SetPreamble_On(PreambDetect)
+        #self.FSK_SetCRC_On(CheckCRC)
+        #self.FSK_SetContinuousMode_On(Continuous)
+        #self.FSK_SetPacketFormatVariable(True)
         pass
 
     def OOK_Init(self,BitSync= True):
@@ -417,7 +422,7 @@ class SX127x:
         print("-------------------------------------")
         print("RegPktConfig1:",'{:08b}'.format(RegPktMode1))
         print("-------------------------------------")
-        print("PacketFormat: ",["Fixed length","Variable length"][RegPktMode1 >> 4 & 1])
+        print("PacketFormat: ",["Fixed length","Variable length"][RegPktMode1 >> 7 & 1])
         print("Encod/Decod: ",["None","Manchester","Whitening"][(RegPktMode1 & 0b01100000)>>5])
         print("CRC Check:",["Off","On"][RegPktMode1 >> 4 & 1])
         
@@ -428,6 +433,24 @@ class SX127x:
         print("DataMode: ",["Continuous mode","Packet mode",][RegPktMode2 >> 6 & 1])
         print ("PayloadLength: ",RegPktMode1 << 8 |RegPktMode2)
 
+    def PrintSNKIRQFlags(self):
+        FSKIrqFlags1 = self.GetFSKIrqFlags1()
+        FSKIrqFlags2 = self.GetFSKIrqFlags2()
+        print("-------------------------------------")
+        print("FSKIrqFlags1:",'{:08b}'.format(FSKIrqFlags1))
+        print("FSKIrqFlags2:",'{:08b}'.format(FSKIrqFlags2))
+        print("-------------------------------------")
+        print("Mode Ready: ",["False","True"][FSKIrqFlags1 >> 7 & 1])
+        print("RxReady: ",["False","True"][FSKIrqFlags1 >> 6 & 1])
+        print("TxReady: ",["False","True"][FSKIrqFlags1 >> 5 & 1])
+        print("RssiThresholdExceded: ",["False","True"][FSKIrqFlags1 >> 1 & 1])
+        print("PreambleDetected: ",["False","True"][FSKIrqFlags1 >> 1 & 1])
+        print("FifoFull: ",["False","True"][FSKIrqFlags2 >> 7 & 1])
+        print("FifoEmpty: ",["False","True"][FSKIrqFlags2 >> 6 & 1])
+        print("PayloadReady: ",["False","True"][FSKIrqFlags2 >> 2 & 1])
+        print("PacketSent: ",["False","True"][FSKIrqFlags2 >> 3 & 1])
+        print("CrcOk: ",["False","True"][FSKIrqFlags2 >> 1 & 1])
+        
     def PrintSyncWConf(self):
         syncwconf = self.readRegister(REG_FSK_SYNC_CONFIG)
         print("SyncWord Detect/Generate:",["Off","On"][syncwconf >> 4 & 1])
@@ -513,17 +536,17 @@ class SX127x:
 
     def GetLORAIrqFlags(self):
         irqFlags = self.readRegister(REG_LORA_IRQ_FLAGS)
-        #self.writeRegister(REG_LORA_IRQ_FLAGS, irqFlags)
+        self.writeRegister(REG_LORA_IRQ_FLAGS, irqFlags)
         return irqFlags
 
     def GetFSKIrqFlags1(self):
         irqFlags = self.readRegister(REG_FSK_IRQ_FLAGS1)
-        #self.writeRegister(REG_FSK_IRQ_FLAGS1, irqFlags)
+        self.writeRegister(REG_FSK_IRQ_FLAGS1, irqFlags)
         return irqFlags
     
     def GetFSKIrqFlags2(self):
         irqFlags = self.readRegister(REG_FSK_IRQ_FLAGS2)
-        #self.writeRegister(REG_FSK_IRQ_FLAGS2, irqFlags)
+        self.writeRegister(REG_FSK_IRQ_FLAGS2, irqFlags)
         return irqFlags
     
     def ClearIRQFlags(self,m=None):
@@ -774,25 +797,27 @@ class SX127x:
             self.writeRegister(REG,self.readRegister(REG) & (0xFF^(1<<pos)))
             
     def handleOnReceive(self, event_source):
-        # lock until TX_Done
-        irqFlags = self.GetLORAIrqFlags()
-        # RX_DONE only, irqFlags should be 0x40
-        if irqFlags & IRQ_RX_DONE_MASK == IRQ_RX_DONE_MASK:
-            # automatically standby when RX_DONE
+        modem = self.getActiveModem()
+        if modem == "LORA":
+            lorairqFlags = self.GetLORAIrqFlags()
+            # RX_DONE only, irqFlags should be 0x40
+            if lorairqFlags & IRQ_RX_DONE_MASK == IRQ_RX_DONE_MASK:
+                # automatically standby when RX_DONE
+                if self.onReceive:
+                    payload = self.readPayload()
+                    self.onReceive(self, payload)
+
+            elif self.readRegister(REG_OP_MODE) != (MODE_LONG_RANGE_MODE | MODE_RX_SINGLE):
+                # no packet received.
+                # reset FIFO address / # enter single RX mode
+                self.writeRegister(REG_FIFO_ADDR_PTR, 0x00)
+                self.writeRegister(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_RX_SINGLE)
+        else:
+            print("FSK PAYLOAD!")
             if self.onReceive:
                 payload = self.readPayload()
                 self.onReceive(self, payload)
-
-        elif self.readRegister(REG_OP_MODE) != (
-            MODE_LONG_RANGE_MODE | MODE_RX_SINGLE
-        ):
-            # no packet received.
-            # reset FIFO address / # enter single RX mode
-            self.writeRegister(REG_FIFO_ADDR_PTR, FifoRxBaseAddr)
-            self.writeRegister(
-                REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_RX_SINGLE
-            )
-        self.ClearIRQFlags()
+        #self.ClearIRQFlags()
         self.collectGarbage()
         return True
 
@@ -823,19 +848,21 @@ class SX127x:
             )
 
     def readPayload(self):
-        # set FIFO address to current RX address
-        # fifo_rx_current_addr = self.readRegister(REG_FIFO_RX_CURRENT_ADDR)
-        self.writeRegister(
-            REG_FIFO_ADDR_PTR, self.readRegister(REG_FIFO_RX_CURRENT_ADDR)
-        )
+        modem = self.getActiveModem()
+        if modem == "LORA":
+            # set FIFO address to current RX address
+            # fifo_rx_current_addr = self.readRegister(REG_FIFO_RX_CURRENT_ADDR)
+            self.writeRegister(REG_FIFO_ADDR_PTR, self.readRegister(REG_FIFO_RX_CURRENT_ADDR))
 
-        # read packet length
-        packet_length = 0
-        if self.implicit_header_mode:
-            packet_length = self.readRegister(REG_PAYLOAD_LENGTH)
+            # read packet length
+            packet_length = 0
+            if self.implicit_header_mode:
+                packet_length = self.readRegister(REG_PAYLOAD_LENGTH)
+            else:
+                packet_length = self.readRegister(REG_RX_NB_BYTES)
         else:
-            packet_length = self.readRegister(REG_RX_NB_BYTES)
-
+            packet_length = 64
+            
         payload = bytearray()
         for i in range(packet_length):
             payload.append(self.readRegister(REG_FIFO))
@@ -848,16 +875,12 @@ class SX127x:
         return int.from_bytes(response, byteorder)
 
     def DetectRSSI(self,callback,Treshold = 100):
-
+        #set Standby
+        self.SetTransceiverMode("STDBY")
         #set treshold value
         Treshold = min(127, Treshold)
         self.writeRegister(REG_FSK_RSSI_THRESH,Treshold*2)
         print("detecting Treshold: ",self.readRegister(REG_FSK_RSSI_THRESH)/2," dbm")
-        
-        #set Standby
-        self.SetTransceiverMode("STDBY")
-        #set Preamble Off
-        self.FSK_SetPreamble_On(False)
         #set Continuous mode On
         self.FSK_SetContinuousMode_On(True)
         #set Rx to RSSI Trigger
@@ -867,9 +890,9 @@ class SX127x:
         #set Period of decrement of the RSSI to once every 8 chips
         self.writeRegister(REG_OOK_DEMOD_AVERAGE, 0x72)
         #Clear IRQ Flags
-        self.ClearIRQFlags()
+        #self.ClearIRQFlags()
         if callback:
-            self.dio0.irq(trigger=Pin.IRQ_RISING, handler=callback)
+            self.dio0.irq(trigger=Pin.IRQ_RISING, handler=self.handleOnReceive)
         #set start rx
         self.SetTransceiverMode("RX")
         
