@@ -142,7 +142,7 @@ class LoraMonitor(UserControl):
         
     def CallbackFunction(self,radio_Obj, payload):
             try:
-                #payload = self.sx127x.readPayload()
+                payload = self.sx127x.readPayload()
                 dcode = payload.decode()
                 rssi = self.sx127x.packetRssi()
                 self.PacketList.append((rssi,payload))
@@ -160,7 +160,7 @@ class LoraMonitor(UserControl):
                 
     def receiveCallback(self):
         print("LoRa Receiver Callback")
-        self.sx127x.onReceive(self.CallbackFunction)
+        self.sx127x.onLoraReceive(self.CallbackFunction)
         self.sx127x.receive()
 
         
