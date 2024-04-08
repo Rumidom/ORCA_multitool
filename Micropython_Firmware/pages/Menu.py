@@ -22,7 +22,7 @@ class Menu(UserControl):
         if self.SelectedIndex < (self.MenuLen-1):
             self.SelectedIndex += 1
     
-    def BKSP_Func():
+    def BKSP_Func(self):
         return("BKSP")
         
     def ESC_Func(self):

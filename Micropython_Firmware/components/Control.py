@@ -42,7 +42,7 @@ class ClassName(UserControl):
     def Right_Func(self):
         return("RIGHT")
     
-    def BKSP_Func():
+    def BKSP_Func(self):
         return("BKSP")
         
     def ESC_Func(self):

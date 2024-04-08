@@ -850,8 +850,9 @@ class SX127x:
         self.FSK_SetRXTrigger(1)
         
         #set Continuous mode On
-        #self.FSK_SetContinuousMode_On(True)
-        self.FSK_SetPayload_Lenght(0)
+        self.FSK_SetContinuousMode_On(True)
+        #setting payload lenght = 0 in Fixed length automatically sets ContinuousMode On
+        #self.FSK_SetPayload_Lenght(0)
         #set DIO0 mapping 
         self.writeRegister(REG_DIO_MAPPING_1, 0b00010000)
         #set Period of decrement of the RSSI to once every 8 chips
@@ -860,6 +861,10 @@ class SX127x:
         #self.ClearIRQFlags()
         if callback:
             self.dio0.irq(trigger=Pin.IRQ_RISING, handler=self.handleOnReceive)
+        #set bitrate to max
+        self.writeRegister(REG_BITRATE_MSB, 0x03)
+        self.writeRegister(REG_BITRATE_LSB, 0xd0)
+
         #set start rx
         self.SetTransceiverMode('RX')
         

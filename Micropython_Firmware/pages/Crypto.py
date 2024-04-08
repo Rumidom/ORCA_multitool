@@ -2,11 +2,12 @@ import random
 from machine import Pin,I2C
 from eeprom_i2c import EEPROM, T24C256
 import fontlib
-import Popups,UI
+#import Popups,UI
 import ucryptolib
 from Control import UserControl
 import hashlib
 import sys
+import os
 
 def Geteep(lcd,i2c):
     eep = None
@@ -66,14 +67,14 @@ def EraseEEPROM(lcd,eep):
 def chunks(string, length):
     return list(string[0+i:length+i] for i in range(0, len(string), length))
 
-def EncryptBytearray(data,Key,Keynum):
+def EncryptBytearray(data,Key):
     # 256 bit AES Cipher Block Chaining (CBC) 
-    IV = hashlib.sha256(Keynum.to_bytes(32, sys.byteorder)).digest()
+    IV = hashlib.sha256(os.urandom(32)).digest()
     enc = ucryptolib.aes(Key, 1)
     datalist = chunks(data, 32)
     if len(datalist[-1]) < 32:
         datalist[-1] = datalist[-1] + b'\x00' * (32 - (len(datalist[-1]) ))
-    encrypted_List = []
+    encrypted_List = [IV]
     for data in datalist:
         XOR_data = XOR_Bytearrays(data,IV)
         encrypted_List.append(enc.encrypt(XOR_data))
@@ -83,11 +84,12 @@ def EncryptBytearray(data,Key,Keynum):
         output.extend(encrypteddbytes)
     return(output)
         
-def DecryptBytearray(data,Key,Keynum):
+def DecryptBytearray(data,Key):
     # 256 bit AES Cipher Block Chaining (CBC) 
-    IV = hashlib.sha256(Keynum.to_bytes(32, sys.byteorder)).digest()
+    IV = data[:32]
     dec = ucryptolib.aes(Key, 1)
     encrypted_List = []
+    data = data[32:]
     for i in range(len(data)//32):
         encrypted_List.append(data[32*i:32*(i+1)])
     plain_text = bytearray()
