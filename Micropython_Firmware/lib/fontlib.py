@@ -1,5 +1,19 @@
 import fonts_dictionary
 
+def DrawPixels(xpos,ypos,rows,fbuf,invert=False):
+    orig_y = ypos
+    orig_x = xpos
+    for row in rows:
+        for bit in row:
+            if ((bit == '1') and (invert == False)):
+                fbuf.pixel(xpos,ypos,1)
+            if (invert == True): # inverts and adds padding
+                if (bit == '0'):
+                    fbuf.pixel(xpos,ypos,1)
+            xpos+=1
+        xpos=orig_x
+        ypos+=1
+        
 def printchar(letter,xpos,ypos,fbuf,font = "five",invert = False,charwidth=None):
     if charwidth == None:
         charwidth = fonts_dictionary.fontdict['fontsize'][font][0]
@@ -14,18 +28,7 @@ def printchar(letter,xpos,ypos,fbuf,font = "five",invert = False,charwidth=None)
         
     rows = [character[i:i+charwidth] for i in range(0,len(character),charwidth)]
     rowslen = len(rows)
-    orig_y = ypos
-    orig_x = xpos
-    for row in rows:
-        for bit in row:
-            if ((bit == '1') and (invert == False)):
-                fbuf.pixel(xpos,ypos,1)
-            if (invert == True): # inverts and adds padding
-                if (bit == '0'):
-                    fbuf.pixel(xpos,ypos,1)
-            xpos+=1
-        xpos=origin
-        ypos+=1
+    DrawPixels(xpos,ypos,rows,fbuf,invert=invert)
 
 def printstring(string,xpos,ypos,spce,fbuf,font = "five",invert=False):
     char_size = fonts_dictionary.fontdict['fontsize'][font]

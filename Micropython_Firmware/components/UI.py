@@ -1,6 +1,7 @@
 import fontlib
 import math
 import Helpers
+import time
 
 def BottomMenu(lcd,buttons,indexpos,MenuActive = True):
     Pairs = []
@@ -155,18 +156,29 @@ def DrawBitmap(path,x,y,fbuf):
     dataOffset = int.from_bytes(filebytes[10:13],"little")
     size = (int.from_bytes(filebytes[18:22],"little"),int.from_bytes(filebytes[22:26],"little"))
     formt = int.from_bytes(filebytes[28:30],"little")
-    print("file:{} bmptag:{} formt:{} size:{}".format(path,bmptag,formt,size))
+    #print("file:{} bmptag:{} formt:{} size:{}".format(path,bmptag,formt,size))
     if formt != 1 or bmptag != b'BM':
-        raise Exception("Only 1 bit Bitmaps are supported.")
+        raise Exception("Only 1 bit bitmaps are supported.")
     posx = x +size[0]
     posy = y
-
+    bytes = size[0]*size[0]/8
+    pallet = [1,0][b'\x00\x00\x00\xff\xff\xff\xff\xff' == filebytes[54:62]]
+    print(pallet)
     for byte in reversed(filebytes[dataOffset:]):
         for i in range(8):
-            if not (byte >> i & 1):
-                fbuf.pixel(posx,posy,1)
+            if (byte >> i & 1):
+                fbuf.pixel(posx,posy,pallet)
+            else:
+                fbuf.pixel(posx,posy,not pallet)
             posx-= 1
             if posx <= x:
                 posx = x +size[0]
                 posy += 1
+    
+def RunAnimation(pathList,x,y,lcd,interval):
+    for path in pathList:
+        lcd.fill(0)
+        DrawBitmap(path,x,y,lcd.fbuf)
+        lcd.show()
+        time.sleep_ms(interval)
     
