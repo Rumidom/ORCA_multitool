@@ -147,3 +147,26 @@ def DrawPacketMonitor(lcd,PacketList,PacketIndex,Pindex,scroll,MaxCharsPerLine=1
 
     DrawScrollBar(lcd,10,40,PacketIndex,len(PacketList))
 
+def DrawBitmap(path,x,y,fbuf):
+    file = open(path, "rb")
+    filebytes = bytearray(file.read())
+    file.close()
+    bmptag = filebytes[0:2]
+    dataOffset = int.from_bytes(filebytes[10:13],"little")
+    size = (int.from_bytes(filebytes[18:22],"little"),int.from_bytes(filebytes[22:26],"little"))
+    formt = int.from_bytes(filebytes[28:30],"little")
+    print("file:{} bmptag:{} formt:{} size:{}".format(path,bmptag,formt,size))
+    if formt != 1 or bmptag != b'BM':
+        raise Exception("Only 1 bit Bitmaps are supported.")
+    posx = x +size[0]
+    posy = y
+
+    for byte in reversed(filebytes[dataOffset:]):
+        for i in range(8):
+            if not (byte >> i & 1):
+                fbuf.pixel(posx,posy,1)
+            posx-= 1
+            if posx <= x:
+                posx = x +size[0]
+                posy += 1
+    
