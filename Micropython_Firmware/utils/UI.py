@@ -163,7 +163,6 @@ def DrawBitmap(path,x,y,fbuf):
     posy = y
     bytes = size[0]*size[0]/8
     pallet = [1,0][b'\x00\x00\x00\xff\xff\xff\xff\xff' == filebytes[54:62]]
-    print(pallet)
     for byte in reversed(filebytes[dataOffset:]):
         for i in range(8):
             if (byte >> i & 1):

@@ -852,22 +852,35 @@ class SX127x:
         #set Continuous mode On
         self.FSK_SetContinuousMode_On(True)
         #setting payload lenght = 0 in Fixed length automatically sets ContinuousMode On
-        #self.FSK_SetPayload_Lenght(0)
+        self.FSK_SetPayload_Lenght(0)
         #set DIO0 mapping 
         self.writeRegister(REG_DIO_MAPPING_1, 0b00010000)
         #set Period of decrement of the RSSI to once every 8 chips
         self.writeRegister(REG_OOK_DEMOD_AVERAGE, 0x72)
         #Clear IRQ Flags
         #self.ClearIRQFlags()
-        if callback:
-            self.dio0.irq(trigger=Pin.IRQ_RISING, handler=self.handleOnReceive)
+        #if callback:
+            #self.dio0.irq(trigger=Pin.IRQ_RISING, handler=self.handleOnReceive)
         #set bitrate to max
-        self.writeRegister(REG_BITRATE_MSB, 0x03)
-        self.writeRegister(REG_BITRATE_LSB, 0xd0)
+        self.writeRegister(REG_BITRATE_MSB, 0x00)
+        self.writeRegister(REG_BITRATE_LSB, 0x0D)
 
         #set start rx
         self.SetTransceiverMode('RX')
-        
+    
+    def PrintFSKBitRate(self):
+        dict = {}
+        dict[(0x68,0x2B)] = 1.2
+        dict[(0x34,0x15)] = 2.4
+        dict[(0x1A,0x0B)] = 4.8
+        dict[(0x0D,0x05)] = 9.6
+        dict[(0x06,0x83)] = 19.2
+        dict[(0x03,0x41)] = 38.4
+        dict[(0x01,0xA1)] = 76.8
+        dict[(0x00,0x0D)] = 153.6
+        MSB = self.readRegister(REG_BITRATE_MSB)
+        LSB = self.readRegister(REG_BITRATE_LSB)        
+        print("{} kbps".format(dict[(MSB,LSB)]))
     def writeRegister(self, address, value):
         self.transfer(address | 0x80, value)
 

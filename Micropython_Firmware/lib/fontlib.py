@@ -18,14 +18,16 @@ def printchar(letter,xpos,ypos,fbuf,font = "five",invert = False,charwidth=None)
     if charwidth == None:
         charwidth = fonts_dictionary.fontdict['fontsize'][font][0]
     origin = xpos
+    
     charval = ord(letter)
+    if charval > 127:
+        charval = 0x3f
     index = charval-32 #start code, 32 or space
     try:
         character = fonts_dictionary.fontdict[font][index]
     except Exception as e:
         print("Character N:",charval)
         print(e)
-        
     rows = [character[i:i+charwidth] for i in range(0,len(character),charwidth)]
     rowslen = len(rows)
     DrawPixels(xpos,ypos,rows,fbuf,invert=invert)
