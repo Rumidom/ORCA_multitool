@@ -4,273 +4,106 @@ from micropython import const
 import gc
 
 # registers (Datasheet pag 90 - Description of the Registers)
-#FIFO REGISTER (Default: 0x00)
-REG_FIFO = const(0x00)
 
-#OPERATION MODE REGISTER (Default: 0x01)
-REG_OP_MODE = const(0x01)
-#LongRangeMode BIT 7 (Can only be modified on Sleep mode)
-#0 => FSK/OOK Mode
-MODE_LONG_RANGE_MODE = const(0x80)
-#1 => LoRaTM Mode
-MODE_SHORT_RANGE_MODE = const(0x00)
-#Modulation Mode BIT 6-5: 
-#00 => FSK mode 
-MODE_FSK = const(0x00)
-#01 => OOK mode
-MODE_OOK = const(0x20)
-# BIT 3:
-#1 => LOW Frequency mode 
-MODE_LOW_FREQUENCY = const(0x08) 
-#0=> HIGH frequency mode
-MODE_HIGH_FREQUENCY = const(0x00)
-# BIT 2-0:
-# Transceiver modes
-#000 => Sleep mode
-MODE_SLEEP = const(0x00)
-#001 => Stdby mode
-MODE_STDBY = const(0x01)
-#010 => FS mode TX (FSTx)
-MODE_FREQSYNTH_TX = const(0x02)
-#011 => Transmitter mode (Tx)
-MODE_TX = const(0x03)
-#100 => FS mode RX (FSRx)
-MODE_FREQSYNTH_RX = const(0x04)
-#101 =>  Receiver mode (Rx)
-MODE_RX_CONTINUOUS = const(0x05)
-#110 => Receiver SINGLE (Rx) (Just for LORA)
-MODE_RX_SINGLE = const(0x06)
+REGFIFO = const(0x00) #FIFO REGISTER (Default: 0x00)
+REGOPMODE = const(0x01) #OPERATION MODE REGISTER (Default: 0x01)(Can only be modified on Sleep mode)
+                        #(BIT_7):     0 => FSK/OOK Mode       1 => LoRaTM Mode
+                        #(BIT 6-5):  00 => FSK mode          01 => OOK mode
+                        #(BIT 3):     1 => LOW Freq mode      0 => HIGH freq mode
+                        #(BIT 2-0): 000 => Sleep mode       001 => Stdby mode 010 => FS mode TX (FSTx)
+                        #           011 => Tx mode          100 => FSRX mode
+                        #           101 => Rx mode          110 => Rx Single mode (Just LORA)
+                        #           111 => Channel activity detection (Just LORA)
+REGBITRATEMSB = const(0x02) #BITRATE SETTING MSB (FSK) (Default: 4.8 kb/s [0x1a,0x0b])
+REGBITRATELSB = const(0x03) #BITRATE SETTING LSB (FSK)
+REGFREQDEVIATIONMSB = const(0x04) #FREQUENCY DEVIATION MSB (FSK)
+REGFREQDEVIATIONLSB = const(0x05) #FREQUENCY DEVIATION LSB (FSK)
+REGFRFMSB = const(0x06) #RF CARRIER FREQUENCY MSB (FSK & LORA) (Default: 434.000 MHz)
+REGFRFMID = const(0x07) #RF CARRIER FREQUENCY MID (FSK & LORA) The RF frequency is taken into account internally only when 
+REGFRFLSB = const(0x08) #RF CARRIER FREQUENCY LSB (FSK & LORA) re-starting the receiver or entering FSRX/FSTX modes
+REGPACONFIG = const(0x09) #OUTPUT POWER CONTROL (FSK & LORA)
+REGFSKRSSITHRESH = const(0x10) #RSSI TRIGGER LEVEL FOR THE RSSI INTERRUPT (FSK)
+REGLNA = const(0x0C) #LNA SETTINGS (FSK & LORA)
+REGFIFOADDRPTR = const(0x0D) #AFC, AGC, SETTINGS / FIFO SPI POINTER (FSK / LORA)
+REGRXCONFIG = const(0x0D) #AFC, AGC, SETTINGS / FIFO SPI POINTER (FSK / LORA)
+                          #(BIT 4)     1 => AfcAutoOn  automatic frequency correction (AFC) (Default: 0)
+                          #(BIT 3)     1 => AgcAutoOn  automatic gain control (AGC) (Default: 1)
+                          #(BIT 2-0) 000 => RxTrigger None 001 => Rx Rssi Trigger 110 => PreambleDetect 111 => Rssi Trigger & PreambleDetect
+REGAFCFEI = const(0x1a) #AFC AND FEI CONTROL
+                        #(BIT 4) AgcStart() Triggers an AGC sequence when set to 1.
+                        #(BIT 1) AfcClear() Clear AFC register set in Rx mode. Always reads 0.
+                        #(BIT 0) AfcAutoClearOn AFC register is cleared at the beginning of the automatic AFC phase
+REGRSSICONFIG = const(0x0E) #RSSI CONFIG/START TX DATA (FSK/LORA)
+REGFIFOTXBASEADDR = const(0x0E) #RSSI CONFIG/START TX DATA (FSK/LORA)
+REGFIFORXBASEADDR = const(0x0F) #RSSI COLLISION DETECTOR/START RX DATA (FSK/LORA)
+REGFIFORXCURRENTADDR = const(0x10) #RSSI THRESHOLD CONTROL/START ADDRESS OF LAST PACKET RECEIVED (FSK / LORA)
+REGRSSIVALUE = const(0x11) #CURRENT ABSOLUTE VALUE OF THE RSSI IN DBM, 0.5DB STEPS (FSK)/ OPTIONAL IRQ FLAG MASK (FSK / LORA)
+REGIRQFLAGS = const(0x12) #CHANNEL FILTER BW CONTROL / IRQ FLAGS (FSK / LORA)
+REGRXNBBYTES = const(0x13) #AFC CHANNEL FILTER BW / NUMBER OF RECEIVED BYTES (FSK / LORA)
+REGOOKPEAK = const(0x14) #OOK DEMODULATOR / NUMBER OF VALID HEADERS RECEIVED MSB (FSK / LORA)
+                         #(BIT 5) 1 => Enables the Bit Synchronizer.
+REGOOKFIX = const(0x15) #THRESHOLD OF THE OOK DEMOD / NUMBER OF VALID HEADERS RECEIVED LSB (FSK / LORA)
+REGOOKAVG = const(0x16) #AVERAGE OF THE OOK DEMOD / NUMBER OF VALID PACKETSRECEIVED MSB (FSK / LORA)
+REGPKTRSSIVALUE = const(0x1A) #AFC AND FEI CONTROL / RSSI OF LAST PACKET (FSK / LORA)
+REGPKTSNRVALUE = const(0x19) #ESTIMATION OF LAST PACKET SNR (FSK / LORA)
+REGMODEMCONFIG1 = const(0x1D) #VALUE OF THE CALCULATED FREQUENCY ERROR / MODEM_CONFIG (FSK / LORA)
+REGMODEMCONFIG2 = const(0x1E)
+REGPREAMBLEDETECT = const(0x1f) #PREAMBLE_DETECT SETTINGS / SIZE OF PREAMBLE (FSK / LORA)
+                                #(BIT 7) (Enables Preamble detector when set to 1. The AGC settings supersede this bit during the startup )
+                                #(BIT 6-5) (Number of Preamble bytes to detect to trigger an interrupt)
+                                #BIT 4-0:
+REGPREAMBLEMSB = const(0x20) #TIMEOUT RX REQUEST AND RSS / SIZE OF PREAMBLE (FSK / LORA)
+REGPREAMBLELSB = const(0x21) #TIMEOUT RSSI AND PAY-LOADREADY / SIZE OF PREAMBLE (FSK / LORA)
+REGPAYLOADLENGTH_LORA = const(0x22) #TIMEOUT RSSI AND SYNCADDRESS / LORATM PAYLOAD LENGTH (FSK / LORA)
+REGFIFORXBYTEADDR = const(0x25) #PREAMBLE LENGTH, MSB / ADDRESS OF LAST BYTE WRITTEN IN FIFO (FSK / LORA)
+REGPREAMBLEMSB_FSK = const(0x25)
+REGMODEMCONFIG3 = const(0x26) #PREAMBLE LENGTH, MSB / MODEM PHY CONFIG 3 (FSK / LORA)
+REGPREAMBLELSB_FSK = const(0x26)
 
-#BITRATE SETTING (FSK) Default value: 4.8 kb/s 0x1a,0x0b
-REG_BITRATE_MSB = const(0x02)
-REG_BITRATE_LSB = const(0x03)
-
-#FREQUENCY DEVIATION (FSK)
-REG_FREQDEVIATION_MSB = const(0x04)
-REG_FREQDEVIATION_LSB = const(0x05)
-
-#RF CARRIER FREQUENCY (FSK & LORA)
-REG_FRF_MSB = const(0x06)
-REG_FRF_MID = const(0x07)
-REG_FRF_LSB = const(0x08)
-#Default value: 434.000 MHz
-#The RF frequency is taken into account internally only when 
-#re-starting the receiver or entering FSRX/FSTX modes
-
-#OUTPUT POWER CONTROL (FSK & LORA)
-REG_PA_CONFIG = const(0x09)
-
-#REGRSSITHRESH RSSI TRIGGER LEVEL FOR THE RSSI INTERRUPT (FSK)
-REG_FSK_RSSI_THRESH = const(0x10)
-
-#ABSOLUTE VALUE OF THE RSSI IN DBM, 0.5DB STEPS (FSK)
-REG_RSSI_VALUE = const(0x11) 
-
-#LNA SETTINGS (FSK & LORA)
-REG_LNA = const(0x0C)
-
-#AFC, AGC, SETTINGS/FIFO SPI POINTER (FSK / LORA)
-REG_FIFO_ADDR_PTR = const(0x0D)
-
-REG_AFC_AGC_SET = const(0x0D)
-#BIT 4 AfcAutoOn  automatic frequency correction (AFC)
-#BIT 3 AgcAutoOn  automatic gain control (AGC)
-#BIT 2-0 RxTrigger #Selects the event triggering AGC and/or AFC at receiver startup.(Table 24)
-
-# AFC AND FEI CONTROL
-RegAfcFei = const(0x1a)
-#BIT 4 AgcStart() Triggers an AGC sequence when set to 1.
-#BIT 1 AfcClear()  Clear AFC register set in Rx mode. Always reads 0.
-#BIT 0 AfcAutoClearOn AFC register is cleared at the beginning of the automatic AFC phase
+REGSYNCCONFIG = const(0x27)#SYNC WORD RECOGNITION CONTROL (FSK)
+                                 #(bit 7) 00 => automatic restart of the receiver OFF 01 =>  On, without waiting for the PLL to re-lock,10 => SYNC WORD On, wait for the PLL to lock (frequency changed)
+                                 #(bit 5)  0 => PreamblePolarity 0xAA                  1 => PreamblePolarity0x55 (default:0xAA)
+                                 #(bit 4)  0 => SYNC WORD OFF                          1 => SYNC WORD ON
+REGSYNCVALUE1 = const(0x28) #SYNC WORD BYTES 1 - 8 (FSK)
+REGSYNCVALUE2 = const(0x29) #SYNC WORD BYTES 1 - 8 (FSK)
+REGSYNCVALUE3 = const(0x2A) #SYNC WORD BYTES 1 - 8 (FSK)
+REGSYNCVALUE4 = const(0x2B) #SYNC WORD BYTES 1 - 8 (FSK)
+REGSYNCVALUE5 = const(0x2C) #SYNC WORD BYTES 1 - 8 (FSK)
+REGSYNCVALUE6 = const(0x2D) #SYNC WORD BYTES 1 - 8 (FSK)
+REGSYNCVALUE7 = const(0x2E) #SYNC WORD BYTES 1 - 8 (FSK)
+REGSYNCVALUE9 = const(0x2F) #SYNC WORD BYTES 1 - 8 (FSK)
+RSSIWIDEBAND = const(0x2C) #WIDEBAND RSSI MEASUREMENT (LORA)
 
 
-#RSSI CONFIG/START TX DATA (FSK/LORA)
-REG_FIFO_TX_BASE_ADDR = const(0x0E)
-REG_FSK_RSSI_CONFIG1 = const(0x0D)
-REG_FSK_RSSI_CONFIG2 = const(0x0E)
-
-#RSSI COLLISION DETECTOR/START RX DATA (FSK/LORA)
-REG_FIFO_RX_BASE_ADDR = const(0x0F)
-
-#RSSI THRESHOLD CONTROL/START ADDRESS OF LAST PACKET RECEIVED (FSK / LORA)
-REG_FIFO_RX_CURRENT_ADDR = const(0x10)
-
-#RSSI VALUE IN DBM / OPTIONAL IRQ FLAG MASK (FSK / LORA)
-REG_LORA_IRQ_FLAGS_MASK = const(0x11)
-REG_FSK_RSSI_DBM = const(0x11)
-
-#CHANNEL FILTER BW CONTROL / IRQ FLAGS (FSK / LORA)
-REG_LORA_IRQ_FLAGS = const(0x12)
-
-#AFC CHANNEL FILTER BW / NUMBER OF RECEIVED BYTES (FSK / LORA)
-REG_RX_NB_BYTES = const(0x13)
-
-#OOK DEMODULATOR / NUMBER OF VALID HEADERS RECEIVED MSB (FSK / LORA)
-REG_OOK_DEMOD_PEAK = const(0x14)
-#BIT 5: Enables the Bit Synchronizer.
-OOKDEMO_BITSYNC_ON = const(0x10)
-
-#THRESHOLD OF THE OOK DEMOD / NUMBER OF VALID HEADERS RECEIVED LSB (FSK / LORA)
-REG_OOK_DEMOD_THRESHOLD = const(0x15)
-
-#AVERAGE OF THE OOK DEMOD / NUMBER OF VALID PACKETSRECEIVED MSB (FSK / LORA)
-REG_OOK_DEMOD_AVERAGE = const(0x16)
-
-#AFC AND FEI CONTROL / RSSI OF LAST PACKET (FSK / LORA)
-REG_PKT_RSSI_VALUE = const(0x1A)
-
-#ESTIMATION OF LAST PACKET SNR (FSK / LORA)
-REG_PKT_SNR_VALUE = const(0x19)
-
-#VALUE OF THE CALCULATED FREQUENCY ERROR / MODEM_CONFIG (FSK / LORA)
-REG_MODEM_CONFIG_1 = const(0x1D)
-REG_MODEM_CONFIG_2 = const(0x1E)
-
-#PREAMBLE_DETECT SETTINGS / SIZE OF PREAMBLE (FSK / LORA)
-REG_PREAMBLE_DETECT = const(0x1f)
-#BIT 7: (Enables Preamble detector when set to 1. The AGC settings supersede this bit during the startup )
-FSKPREAMBLE_DETECTOR_ON = const(0x80)
-#BIT 6-5: (Number of Preamble bytes to detect to trigger an interrupt)
-FSKPREAMBLE_DETECTOR_SIZE = const(0x00)#const(0x20),const(0x60),const(0x40)
-#BIT 4-0:
-FSKPREAMBLE_DETECTOR_TOL = const(0x0A)
-
-#TIMEOUT RX REQUEST AND RSS / SIZE OF PREAMBLE (FSK / LORA)
-REG_PREAMBLE_MSB = const(0x20)
-
-#TIMEOUT RSSI AND PAY-LOADREADY / SIZE OF PREAMBLE (FSK / LORA)
-REG_PREAMBLE_LSB = const(0x21)
-
-#TIMEOUT RSSI AND SYNCADDRESS / LORATM PAYLOAD LENGTH (FSK / LORA)
-REG_LORA_PAYLOAD_LENGTH = const(0x22)
-
-#PREAMBLE LENGTH, MSB / ADDRESS OF LAST BYTE WRITTEN IN FIFO (FSK / LORA)
-REG_FIFO_RX_BYTE_ADDR = const(0x25)
-Reg_FSKPreambleMsb = const(0x25)
-
-#PREAMBLE LENGTH, MSB / MODEM PHY CONFIG 3 (FSK / LORA)
-REG_MODEM_CONFIG_3 = const(0x26)
-Reg_FSKPreamblelsb = const(0x26)
-
-#SYNC WORD RECOGNITION CONTROL (FSK)
-REG_FSK_SYNC_CONFIG = const(0x27)
-# AutoRestartRxMode bit 7 - 6: 00 => OFF,01 => On, without waiting for the PLL to re-lock,10 => On, wait for the PLL to lock (frequency changed)
-FSKSYNC_AUTO_RESTART_ON_WAITRELOCK = const(0x40) 
-FSKSYNC_AUTO_RESTART_ON_WAITLOCK = const(0x80) 
-# PreamblePolarity bit 5: 0 => 0xAA (default) 1 => 0x55
-FSKSYNC_PREPOL_0xAA = const(0x20)
-FSKSYNC_PREPOL_0x55 = const(0x00)
-# SyncOn bit 4: 0 => OFF 1 => ON
-FSKSYNC_WORD_ON = const(0x10)
-
-#SYNC WORD BYTES 1 - 8 (FSK)
-REG_SYNC_WORD_BYTES_1 = const(0x28)
-REG_SYNC_WORD_BYTES_2 = const(0x29)
-REG_SYNC_WORD_BYTES_3 = const(0x2A)
-REG_SYNC_WORD_BYTES_4 = const(0x2B)
-REG_SYNC_WORD_BYTES_5 = const(0x2C)
-REG_SYNC_WORD_BYTES_6 = const(0x2D)
-REG_SYNC_WORD_BYTES_7 = const(0x2E)
-REG_SYNC_WORD_BYTES_8 = const(0x2F)
-
-#WIDEBAND RSSI MEASUREMENT (LORA)
-REG_RSSI_WIDEBAND = const(0x2C)
-
-#PACKET MODE SETTINGS (FSK)
-REG_FSK_PACKETCONFIG1 = const(0x30)
-#BIT 7: (Defines the packet format used: Variable or Fixed length)
-FSKPACKET_PACKETFORMAT_VARIABLE = const(0x80)
-#BIT 6-5:(Defines DC-free encoding/decoding performed)
-#BIT 4:(Enables CRC calculation/check (Tx/Rx))
-FSKPACKET_CRC_ON = const(0x10)
-#BIT 3:(Defines the behavior of the packet handler when CRC check fails)
-#BIT 2-1:(Defines address based filtering in Rx)
-#BIT 0:(Selects the CRC and whitening algorithms)
-REG_FSK_PACKETCONFIG2 = const(0x31)
-#BIT 7:(Not Used)
-#BIT 6:(Data processing mode: Continuous mode, Packet mode)
-FSKPACKET_DATAMODE_PACKETMODE = const(0x40)
-#BIT 5:(Enables the io-homecontrol® compatibility mode)
-#BIT 4:(reserved - Linked to io-homecontrol® compatibility mode)
-#BIT 3:(Enables the Beacon mode in Fixed packet format)
-#BIT 2-1:( Packet Length Most significant bits)
-
-#INVERT LORA I AND Q SIGNALS (LORA)
-REG_INVERTIQ = const(0x33)
-RFLR_INVERTIQ_RX_MASK = const(0xBF)
-RFLR_INVERTIQ_RX_OFF = const(0x00)
-RFLR_INVERTIQ_RX_ON = const(0x40)
-RFLR_INVERTIQ_TX_MASK = const(0xFE)
-RFLR_INVERTIQ_TX_OFF = const(0x01)
-RFLR_INVERTIQ_TX_ON = const(0x00)
-
-REG_INVERTIQ2 = const(0x3B)
-RFLR_INVERTIQ2_ON = const(0x19)
-RFLR_INVERTIQ2_OFF = const(0x1D)
-
-#PAYLOAD LENGTH SETTING (FSK)
-REG_FSK_PAYLOADLENGTH = const(0x32)
-
-#DEFINES THE CONDITION TO START PACKET TRANSMISSION (FSK)
-REG_FSK_FIFOTHRESHOLD = const(0x35)
-FSK_ONEBYTE_FIFO_THRESHOLD = const(0x80)
-
-#LORA DETECTION OPTIMIZEFOR SF6 (LORA)
-REG_DETECTION_OPTIMIZE = const(0x31)
-REG_DETECTION_THRESHOLD = const(0x37)
-
-#FSK IRQ FLAGS
-REG_FSK_IRQ_FLAGS1 = const(0x3e)
-REG_FSK_IRQ_FLAGS2 = const(0x3f)
-
-#BIT3
-FSK_PACKETSENT = const(0x08)
-#BIT2
-FSK_PAYLOADREADY = const(0x04)
-#BIT1
-FSK_CRCOK = const(0x02)
-#BIT0
-FSK_LOWBAT = const(0x01)
-
-#LORA SYNC WORD (LORA)
-REG_SYNC_WORD = const(0x39)
-
-#Mapping of pins DIO0 to DIO3(LORA & FSK)
-REG_DIO_MAPPING_1 = const(0x40)
-
-#BITS 7-6 Table 18
-DIO0_LORA_RXDONE = const(0x00)
-DIO0_LORA_TXDONE = const(0x40)
-DIO0_LORA_CADDONE = const(0x80)
-
-#Mapping of pins DIO0 to DIO3(LORA & FSK)
-REG_DIO_MAPPING_2 = const(0x41)
-
-#BITS 7-6 (CONTINUOUS MODE )Table 29 and Table 30
-DIO0FSK_CONTINUOUS_TXREADY = const(0x00)
-DIO0FSK_CONTINUOUS_RX_RSSI_PREAMB_DETECTED = const(0x40)
-DIO0FSK_CONTINUOUS_CADDONE = const(0x80)
-
-#BITS 7-6 (PACKETMODE MODE )Table 29 and Table 30
-DIO0FSK_PACKET_TXPACKETSENT = const(0x00)
-DIO0FSK_PACKET_RXPAYLOADREADY = const(0x00)
-DIO0FSK_PACKET_CRC_OK = const(0x40)
-
-#SEMTECH ID RELATING THE SILICON REVISION
-REG_VERSION = const(0x42)
-
-# PA config
-PA_BOOST = const(0x80)
-
-# IRQ masks
-IRQ_TX_DONE_MASK = const(0x08)
-IRQ_PAYLOAD_CRC_ERROR_MASK = const(0x20)
-IRQ_RX_DONE_MASK = const(0x40)
-IRQ_RX_TIME_OUT_MASK = const(0x80)
-
-# Buffer size
-MAX_PKT_LENGTH = const(255)
-
+REGFSKPACKETCONFIG1 = const(0x30)#PACKET MODE SETTINGS (FSK)
+                                 #BIT 7: (Defines the packet format used: Variable or Fixed length)
+                                 #BIT 6-5:(Defines DC-free encoding/decoding performed)
+                                 #BIT 4:(Enables CRC calculation/check (Tx/Rx))
+                                 #BIT 3:(Defines the behavior of the packet handler when CRC check fails)
+                                 #BIT 2-1:(Defines address based filtering in Rx)
+                                 #BIT 0:(Selects the CRC and whitening algorithms)
+REGFSKPACKETCONFIG2 = const(0x31)#PACKET MODE SETTINGS (FSK)
+                                 #BIT 7:(Not Used)
+                                 #BIT 6:(Data processing mode: Continuous mode, Packet mode)
+                                 #BIT 5:(Enables the io-homecontrol® compatibility mode)
+                                 #BIT 4:(reserved - Linked to io-homecontrol® compatibility mode)
+                                 #BIT 3:(Enables the Beacon mode in Fixed packet format)
+                                 #BIT 2-1:( Packet Length Most significant bits)
+REGINVERTIQ = const(0x33) #INVERT LORA I AND Q SIGNALS (LORA)
+REGINVERTIQ2 = const(0x3B)
+REG_PAYLOADLENGTH_FSK = const(0x32) #PAYLOAD LENGTH SETTING (FSK)
+REGFIFOTHRESHOLD_FSK = const(0x35) #DEFINES THE CONDITION TO START PACKET TRANSMISSION (FSK)
+REGDETECTIONOPTIMIZE = const(0x31) #LORA DETECTION OPTIMIZEFOR SF6 (LORA)
+REGDETECTIONTHRESHOLD = const(0x37) #LoRa detection threshold
+ 0x0A => SF7 to SF12 0x0C => SF6
+REGIRQFLAGS1_FSK = const(0x3e) #FSK IRQ FLAGS
+REGIRQFLAGS2_FSK = const(0x3f) #FSK IRQ FLAGS
+REGSYNCWORD_LORA = const(0x39) #LORA SYNC WORD (LORA)
+REGDIOMAPPING1 = const(0x40) #Mapping of pins DIO0 to DIO3(LORA & FSK)
+                             #BITS 7-6 Table 18
+REGDIOMAPPING2 = const(0x41) #Mapping of pins DIO4,DIO5 & MapPreambleDetect(LORA & FSK)
+                             #BITS 7-6 (CONTINUOUS MODE )Table 29 and Table 30
+REGVERSION = const(0x42) #SEMTECH ID RELATING THE SILICON REVISION
 
 class SX127x:
 
@@ -316,7 +149,7 @@ class SX127x:
         
         # check version
         for i in range(5):
-            self.version = self.readRegister(REG_VERSION)
+            self.version = self.readRegister(REGVERSION)
             if self.version:
                 break
             
@@ -348,20 +181,20 @@ class SX127x:
         
         #self.setSignalBandwidth(self.parameters["signal_bandwidth"])
         # set LNA boost 0x03 is highest gain
-        self.writeRegister(REG_LNA, self.readRegister(REG_LNA) | 0x03)
+        self.writeRegister(REGLNA, self.readRegister(REGLNA) | 0x03)
         # set auto AGC (automatic gain control, negates LNA boost setting)
-        self.writeRegister(REG_MODEM_CONFIG_3, 0x04)
+        self.writeRegister(REGMODEMCONFIG3, 0x04)
 
         # set base addresses
-        self.writeRegister(REG_FIFO_TX_BASE_ADDR, 0x00)
-        self.writeRegister(REG_FIFO_RX_BASE_ADDR, 0x00)
+        self.writeRegister(REGFIFOTXBASEADDR, 0x00)
+        self.writeRegister(REGFIFORXBASEADDR, 0x00)
         
         # set LowDataRateOptimize flag if symbol time > 16ms (default disable on reset)
-        # self.writeRegister(REG_MODEM_CONFIG_3, self.readRegister(REG_MODEM_CONFIG_3) & 0xF7)  # default disable on reset
+        # self.writeRegister(REGMODEMCONFIG3, self.readRegister(REGMODEMCONFIG3) & 0xF7)  # default disable on reset
         bw = self.signal_bandwidth
         sf = self.spreading_factor
         if 1000 / bw / 2 ** sf > 16:
-            self.writeRegister(REG_MODEM_CONFIG_3, self.readRegister(REG_MODEM_CONFIG_3) | 0x08)
+            self.writeRegister(REGMODEMCONFIG3, self.readRegister(REGMODEMCONFIG3) | 0x08)
     
     def FSK_Init(self,SyncWordComp = False,PreambDetect = False,CheckCRC = False,Continuous= True):
         self.SetTransceiverMode('STDBY')
@@ -378,41 +211,41 @@ class SX127x:
         pass
     
     def getActiveModem(self):
-        RegOpMode = self.readRegister(REG_OP_MODE)
-        return(["LORA","FSK/OOK"][RegOpMode << 7 & 1])
+        OpMode = self.readRegister(REGOPMODE)
+        return(["LORA","FSK/OOK"][OpMode << 7 & 1])
 
     def SetRadioMode(self,Rmode):
         self.SetTransceiverMode('SLEEP')
         if self.RadioMode == "LORA":
-            self.writeRegister(REG_OP_MODE,self.readRegister(REG_OP_MODE) | (1<<7))
+            self.writeRegister(REGOPMODE,self.readRegister(REGOPMODE) | (1<<7))
         elif self.RadioMode == "FSK":
-            self.writeRegister(REG_OP_MODE,((self.readRegister(REG_OP_MODE) & (0xFF ^ (1<<7))) & (0xFF ^ (1<<6))) & (0xFF ^ (1<<5)) )
+            self.writeRegister(REGOPMODE,((self.readRegister(REGOPMODE) & 0b10011111)))
         elif self.RadioMode == "OOK":
-            self.writeRegister(REG_OP_MODE,((self.readRegister(REG_OP_MODE) & (0xFF ^ (1<<7))) & (0xFF ^ (1<<6))) | (1<<5))
+            self.writeRegister(REGOPMODE,((self.readRegister(REGOPMODE) & 0b10011111) | 0b00100000))   
         else:
             raise Exception("Invalid Radio Mode")
         self.RadioMode = Rmode
         self.SetTransceiverMode('STDBY')
         
     def SetTransceiverMode(self,mode):
-        regOPMode = self.readRegister(REG_OP_MODE)
+        OpMode = self.readRegister(REGOPMODE)
         #print(regOPMode >> 7,mode)
-        mode_bin = self.OpModes[regOPMode >> 7 & 1].index(mode)
+        mode_bin = self.OpModes[OpMode >> 7 & 1].index(mode)
 
-        self.writeRegister(REG_OP_MODE, (self.readRegister(REG_OP_MODE) & 0b11111000) | mode_bin)
-        return(self.readRegister(REG_OP_MODE))
+        self.writeRegister(REGOPMODE, (self.readRegister(REGOPMODE) & 0b11111000) | mode_bin)
+        return(self.readRegister(REGOPMODE))
     
     def PrintOpMode(self):
-        RegOpMode = self.readRegister(0x01)
+        OpMode = self.readRegister(0x01)
         print("-------------------------------------")
-        print("RegOpMode:",'{:08b}'.format(RegOpMode))
+        print("RegOpMode:",'{:08b}'.format(OpMode))
         print("-------------------------------------")
-        print("OpMode: ",["FSK","OOK","LORA"][((RegOpMode >> 7)*2)+((RegOpMode & 0b01100000)>>5)])
-        print("Freq Mode: ",["HIGH Freq","LOW Freq"][RegOpMode >> 3 & 1])
-        print("Transciver :",self.OpModes[RegOpMode >> 7 & 1][RegOpMode & ((1 << 3) - 1)])
+        print("OpMode: ",["FSK","OOK","LORA"][((OpMode >> 7)*2)+((OpMode & 0b01100000)>>5)])
+        print("Freq Mode: ",["HIGH Freq","LOW Freq"][OpMode >> 3 & 1])
+        print("Transciver :",self.OpModes[OpMode >> 7 & 1][OpMode & ((1 << 3) - 1)])
         
     def PrintFSKPktMode(self):
-        RegPktMode1 = self.readRegister(REG_FSK_PACKETCONFIG1)
+        RegPktMode1 = self.readRegister(REGFSKPACKETCONFIG1)
         print("-------------------------------------")
         print("RegPktConfig1:",'{:08b}'.format(RegPktMode1))
         print("-------------------------------------")
@@ -420,12 +253,12 @@ class SX127x:
         print("Encod/Decod: ",["None","Manchester","Whitening"][(RegPktMode1 & 0b01100000)>>5])
         print("CRC Check:",["Off","On"][RegPktMode1 >> 4 & 1])
         
-        RegPktMode2 = self.readRegister(REG_FSK_PACKETCONFIG2)
+        RegPktMode2 = self.readRegister(REGFSKPACKETCONFIG2)
         print("-------------------------------------")
         print("RegPktConfig2:",'{:08b}'.format(RegPktMode2))
         print("-------------------------------------")
         print("DataMode: ",["Continuous mode","Packet mode",][RegPktMode2 >> 6 & 1])
-        print("PayloadLength: ",RegPktMode1 << 8 |self.readRegister(REG_FSK_PAYLOADLENGTH))
+        print("PayloadLength: ",RegPktMode1 << 8 |self.readRegister(PAYLOADLENGTH_FSK))
 
     def PrintFSKIRQFlags(self):
         FSKIrqFlags1 = self.GetFSKIrqFlags1()
@@ -446,28 +279,28 @@ class SX127x:
         print("CrcOk: ",["False","True"][FSKIrqFlags2 >> 1 & 1])
         
     def PrintSyncWConf(self):
-        syncwconf = self.readRegister(REG_FSK_SYNC_CONFIG)
+        syncwconf = self.readRegister(REGSYNCCONFIG)
         print("SyncWord Detect/Generate:",["Off","On"][syncwconf >> 4 & 1])
 
     def PrintPreambleConf(self):
-        preambleconf = self.readRegister(REG_PREAMBLE_DETECT)
+        preambleconf = self.readRegister(REGPREAMBLEDETECT)
         print("Preamble Detector: ",["Off","On"][preambleconf >> 7 & 1])
         print("Preamble Detector Size:",(preambleconf & 0b01100000)>>5, "bytes")    
 
            
     def WriteToFIFO(self, buffer):
-        currentLength = self.readRegister(REG_LORA_PAYLOAD_LENGTH)
+        currentLength = self.readRegister(REGPAYLOADLENGTH_LORA)
         size = len(buffer)
 
         # check size
-        size = min(size, (MAX_PKT_LENGTH - 0x00 - currentLength))
+        size = min(size, (255 - currentLength))
 
         # write data
         for i in range(size):
             self.writeRegister(REG_FIFO, buffer[i])
 
         # update length
-        #self.writeRegister(REG_LORA_PAYLOAD_LENGTH, currentLength + size)
+        #self.writeRegister(REGPAYLOADLENGTH_LORA, currentLength + size)
         return size
 
     def Send(self,data):
@@ -483,26 +316,25 @@ class SX127x:
         self.ClearIRQFlags(m = modem)
         
         #toa = getTimeOnAir(data_len)
-        self.writeRegister(REG_DIO_MAPPING_1,DIO0_LORA_TXDONE)
-        self.writeRegister(REG_DIO_MAPPING_2,DIO0FSK_CONTINUOUS_TXREADY)
-        self.writeRegister(REG_DIO_MAPPING_2,DIO0FSK_PACKET_TXPACKETSENT)
+        self.writeRegister(REGDIOMAPPING1,0b00000000)
+        self.writeRegister(REGDIOMAPPING2,0b00000000)
         
         timeout = 0
         if(modem == 'LORA'):
             # calculate timeout in ms (150 % of expected time-on-air)
             #timeout = (toa * 1.5) / 1000;
             timeout = 5000
-            self.writeRegister(REG_FIFO_ADDR_PTR, 0b00000000  )
-            self.writeRegister(REG_FIFO_TX_BASE_ADDR, 0b00000000  )
-            self.writeRegister(REG_LORA_PAYLOAD_LENGTH, data_len)
+            self.writeRegister(REGFIFOADDRPTR, 0b00000000  )
+            self.writeRegister(REGFIFOTXBASEADDR, 0b00000000  )
+            self.writeRegister(REGPAYLOADLENGTH_LORA, data_len)
         elif(modem == "FSK/OOK"):
             #calculate timeout in ms (5ms + 500 % of expected time-on-air)
             #timeout = 5 + (toa * 5) / 1000;
             timeout = 5000
             #set payload lenght only needed in fixed packet length
-            self.writeRegister(REG_FSK_PAYLOADLENGTH, data_len)
+            self.writeRegister(PAYLOADLENGTH_FSK, data_len)
             #set condition to start transmiting
-            self.writeRegister(REG_FSK_FIFOTHRESHOLD, FSK_ONEBYTE_FIFO_THRESHOLD)
+            self.writeRegister(REGFIFOTHRESHOLD_FSK, 0x80)
 
         else:
             raise Exception("Modem ERROR")
@@ -517,40 +349,38 @@ class SX127x:
 
         #wait for packet transmission or timeout
         start = ticks_ms()
-        while (self.readRegister(REG_LORA_IRQ_FLAGS) & IRQ_TX_DONE_MASK) == 0 and (self.readRegister(REG_FSK_IRQFLAGS2) & FSK_PACKETSENT) == 0:
+        while (self.readRegister(REGIRQFLAGS) & 0x08) == 0 and (self.readRegister(REGIRQFLAGS2_FSK) & 0x08) == 0:
             if (ticks_ms() - start > timeout):
                 print("Transmission Timedout")
                 break
         
-
-
         self.collectGarbage()
         self.ClearIRQFlags(m=modem)
         print("Transmition Finished")
 
     def GetLORAIrqFlags(self):
-        irqFlags = self.readRegister(REG_LORA_IRQ_FLAGS)
-        self.writeRegister(REG_LORA_IRQ_FLAGS, irqFlags)
+        irqFlags = self.readRegister(REGIRQFLAGS)
+        self.writeRegister(REGIRQFLAGS, irqFlags)
         return irqFlags
 
     def GetFSKIrqFlags1(self):
-        irqFlags = self.readRegister(REG_FSK_IRQ_FLAGS1)
-        self.writeRegister(REG_FSK_IRQ_FLAGS1, irqFlags)
+        irqFlags = self.readRegister(REGFSKIRQFLAGS1)
+        self.writeRegister(REGFSKIRQFLAGS1, irqFlags)
         return irqFlags
     
     def GetFSKIrqFlags2(self):
-        irqFlags = self.readRegister(REG_FSK_IRQ_FLAGS2)
-        self.writeRegister(REG_FSK_IRQ_FLAGS2, irqFlags)
+        irqFlags = self.readRegister(REGFSKIRQFLAGS2)
+        self.writeRegister(REGFSKIRQFLAGS2, irqFlags)
         return irqFlags
     
     def ClearIRQFlags(self,m=None):
         if m == None:
             m = self.getActiveModem()
         if m == "LORA":
-            self.writeRegister(REG_LORA_IRQ_FLAGS, 0b11111111);
+            self.writeRegister(REGIRQFLAGS, 0b11111111);
         else:
-            self.writeRegister(REG_FSK_IRQ_FLAGS1, 0b11111111);
-            self.writeRegister(REG_FSK_IRQ_FLAGS2, 0b11111111);
+            self.writeRegister(REGFSKIRQFLAGS1, 0b11111111);
+            self.writeRegister(REGFSKIRQFLAGS2, 0b11111111);
 
     def packetRssi(self):
         rfi = self.readRegister(0x01) >> 3 & 1
@@ -560,35 +390,17 @@ class SX127x:
     def packetSnr(self):
         return (self.readRegister(REG_PKT_SNR_VALUE)) * 0.25
 
-    def standby(self):
-        opMode = self.OperationMode
-        if opMode == 'LORA':
-            self.writeRegister(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_STDBY)
-        elif opMode == 'FSK':
-            self.writeRegister(REG_OP_MODE, MODE_SHORT_RANGE_MODE | MODE_FSK | MODE_STDBY)
-        elif opMode == 'OOK':
-            self.writeRegister(REG_OP_MODE, MODE_SHORT_RANGE_MODE | MODE_OOK | MODE_STDBY)
-
-    def sleep(self):
-        opMode = self.OperationMode
-        if opMode == 'LORA':
-            self.writeRegister(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_SLEEP)
-        elif opMode == 'FSK':
-            self.writeRegister(REG_OP_MODE, MODE_SHORT_RANGE_MODE | MODE_FSK | MODE_SLEEP)
-        elif opMode == 'OOK':
-            self.writeRegister(REG_OP_MODE, MODE_SHORT_RANGE_MODE | MODE_OOK | MODE_SLEEP)
-
     def setTxPower(self, level, usePaboost = True):
         self.tx_power_level = level       
         if usePaboost:
             # PA BOOST < this is to select a fisical pin on the chip for the antenna
             # Probably True for most SX127x diy lora modules
             level = min(max(level, 2), 17)
-            self.writeRegister(REG_PA_CONFIG, 0x80 | (level - 2))
+            self.writeRegister(REGPACONFIG, 0x80 | (level - 2))
         else:
             # RFO
             level = min(max(level, 0), 14)
-            self.writeRegister(REG_PA_CONFIG, 0x70 | level)
+            self.writeRegister(REGPACONFIG, 0x70 | level)
 
     def setFrequency(self, frequency):
         # TODO min max limit
@@ -603,8 +415,8 @@ class SX127x:
 
     def setSpreadingFactor(self, sf):
         sf = min(max(sf, 6), 12)
-        self.writeRegister(REG_DETECTION_OPTIMIZE, 0xC5 if sf == 6 else 0xC3)
-        self.writeRegister(REG_DETECTION_THRESHOLD, 0x0C if sf == 6 else 0x0A)
+        self.writeRegister(REGDETECTIONOPTIMIZE, 0xC5 if sf == 6 else 0xC3)
+        self.writeRegister(REGDETECTIONTHRESHOLD, 0x0C if sf == 6 else 0x0A)
         self.writeRegister(REG_MODEM_CONFIG_2,(self.readRegister(REG_MODEM_CONFIG_2) & 0x0F) | ((sf << 4) & 0xF0))
 
     def setSignalBandwidth(self, sbw):
@@ -619,12 +431,12 @@ class SX127x:
                     bw = i
                     break
 
-        self.writeRegister(REG_MODEM_CONFIG_1,(self.readRegister(REG_MODEM_CONFIG_1) & 0x0F) | (bw << 4))
+        self.writeRegister(REGMODEMCONFIG1,(self.readRegister(REGMODEMCONFIG1) & 0x0F) | (bw << 4))
 
     def setCodingRate(self, denominator):
         denominator = min(max(denominator, 5), 8)
         cr = denominator - 4
-        self.writeRegister(REG_MODEM_CONFIG_1,(self.readRegister(REG_MODEM_CONFIG_1) & 0xF1) | (cr << 1))
+        self.writeRegister(REGMODEMCONFIG1,(self.readRegister(REGMODEMCONFIG1) & 0xF1) | (cr << 1))
 
     def setPreambleLength(self, length):
         self.writeRegister(REG_PREAMBLE_MSB, (length >> 8) & 0xFF)
@@ -638,28 +450,17 @@ class SX127x:
     def invertIQ(self, invertIQ):
         self.invertIQ = invertIQ
         if invertIQ:
-            self.writeRegister(REG_INVERTIQ,((self.readRegister(REG_INVERTIQ)&RFLR_INVERTIQ_TX_MASK&RFLR_INVERTIQ_RX_MASK)| RFLR_INVERTIQ_RX_ON| RFLR_INVERTIQ_TX_ON))
-            self.writeRegister(REG_INVERTIQ2, RFLR_INVERTIQ2_ON)
+            self.writeRegister(REGINVERTIQ,((self.readRegister(REGINVERTIQ)&0xbe)| 0x40))
+            self.writeRegister(REGINVERTIQ2, 0x19)
         else:
-            self.writeRegister(
-                REG_INVERTIQ,
-                (
-                    (
-                        self.readRegister(REG_INVERTIQ)
-                        & RFLR_INVERTIQ_TX_MASK
-                        & RFLR_INVERTIQ_RX_MASK
-                    )
-                    | RFLR_INVERTIQ_RX_OFF
-                    | RFLR_INVERTIQ_TX_OFF
-                ),
-            )
-            self.writeRegister(REG_INVERTIQ2, RFLR_INVERTIQ2_OFF)
+            self.writeRegister(REGINVERTIQ,((self.readRegister(REGINVERTIQ)&0xbe)| 0x01))
+            self.writeRegister(REGINVERTIQ2, 0x1D)
 
     def setSyncWord(self, sw):
-        self.writeRegister(REG_SYNC_WORD, sw)
+        self.writeRegister(REGSYNCWORD_LORA, sw)
 
     def setChannel(self):
-        self.standby()
+        self.SetTransceiverMode('STDBY')
         self.setFrequency(self.frequency)
         self.invertIQ(self.invert_IQ)
         self.setTxPower(self.tx_power_level)
@@ -678,13 +479,13 @@ class SX127x:
             self.implicit_header_mode != implicitHeaderMode
         ):  # set value only if different.
             self.implicit_header_mode = implicitHeaderMode
-            modem_config_1 = self.readRegister(REG_MODEM_CONFIG_1)
+            modem_config_1 = self.readRegister(REGMODEMCONFIG1)
             config = (
                 modem_config_1 | 0x01
                 if implicitHeaderMode
                 else modem_config_1 & 0xFE
             )
-            self.writeRegister(REG_MODEM_CONFIG_1, config)
+            self.writeRegister(REGMODEMCONFIG1, config)
 
     def receive(self, size=0):
         self.implicitHeaderMode(size > 0)
@@ -693,9 +494,7 @@ class SX127x:
 
         # The last packet always starts at FIFO_RX_CURRENT_ADDR
         # no need to reset FIFO_ADDR_PTR
-        self.writeRegister(
-            REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_RX_CONTINUOUS
-        )
+        self.writeRegister(REGOPMODE, 0b10000101)
 
     def listen(self, time=1000):
         time = min(max(time, 0), 10000)
@@ -717,45 +516,45 @@ class SX127x:
         if self.dio0:
             if callback:
                 if modem == "LORA":
-                    self.writeRegister(REG_DIO_MAPPING_1, 0x00)
+                    self.writeRegister(REGDIOMAPPING1, 0x00)
                 self.dio0.irq(trigger=Pin.IRQ_RISING, handler=self.handleOnReceive)
             else:
                 pass
                 # TODO detach irq
     def FSK_SetPacketFormatVariable(self,flag):
-        self.SetSingleBitTo(REG_FSK_PACKETCONFIG1,flag,7)
+        self.SetSingleBitTo(REGFSKPACKETCONFIG1,flag,7)
         
     def FSK_SetSyncword_On(self,flag):
-        self.SetSingleBitTo(REG_FSK_SYNC_CONFIG,flag,4)
+        self.SetSingleBitTo(REGSYNCCONFIG,flag,4)
 
     def FSK_SetPreamble_On(self,flag):
-        self.SetSingleBitTo(REG_PREAMBLE_DETECT,flag,7)
+        self.SetSingleBitTo(REGPREAMBLEDETECT,flag,7)
     
     def FSK_SetCRC_On(self,flag):
-        self.SetSingleBitTo(REG_FSK_PACKETCONFIG1,flag,4)
+        self.SetSingleBitTo(REGFSKPACKETCONFIG1,flag,4)
     
     def FSK_SetPayload_Lenght(self,lenght):
-        self.writeRegister(REG_FSK_PACKETCONFIG2, (((lenght >> 8) & 0x03) | self.readRegister(REG_FSK_PACKETCONFIG2&0b11111100)) )
-        self.writeRegister(REG_FSK_PAYLOADLENGTH, lenght & 0xff)
+        self.writeRegister(REGFSKPACKETCONFIG2, (((lenght >> 8) & 0x03) | self.readRegister(REGFSKPACKETCONFIG2&0b11111100)) )
+        self.writeRegister(PAYLOADLENGTH_FSK, lenght & 0xff)
         
     def FSK_SetContinuousMode_On(self, flag):
-        self.SetSingleBitTo(REG_FSK_PACKETCONFIG2,flag,6,invert = True)
+        self.SetSingleBitTo(REGFSKPACKETCONFIG2,flag,6,invert = True)
     
     def OOK_SetBitSynchronizer_On(self,flag):
-        self.SetSingleBitTo(REG_OOK_DEMOD_PEAK,flag,5)
+        self.SetSingleBitTo(REGOOKPEAK,flag,5)
 
     def FSK_SetRXTrigger(self,N):
         # None N = 0
         # Rssi Interrupt N = 1
         # PreambleDetect N = 6
         # Rssi Interrupt & PreambleDetect N = 7
-        self.writeRegister(REG_AFC_AGC_SET,(self.readRegister(REG_AFC_AGC_SET) & (0xf8))|N)
+        self.writeRegister(REGRXCONFIG,(self.readRegister(REGRXCONFIG) & (0xf8))|N)
 
     def FSK_SetAGC_On(self,flag):
-        self.SetSingleBitTo(REG_AFC_AGC_SET,flag,3)
+        self.SetSingleBitTo(REGRXCONFIG,flag,3)
     
     def FSK_SetAFC_On(self,flag):
-        self.SetSingleBitTo(REG_AFC_AGC_SET,flag,4)
+        self.SetSingleBitTo(REGRXCONFIG,flag,4)
     
     def SetSingleBitTo(self,REG,flag,pos,invert = False):
         if invert:
@@ -770,17 +569,17 @@ class SX127x:
         if modem == "LORA":
             lorairqFlags = self.GetLORAIrqFlags()
             # RX_DONE only, irqFlags should be 0x40
-            if lorairqFlags & IRQ_RX_DONE_MASK == IRQ_RX_DONE_MASK:
+            if lorairqFlags & 0x40 == 0x40:
                 # automatically standby when RX_DONE
                 if self.onReceive:
                     payload = self.readPayload()
                     self.User_Callback(self,payload)
 
-            elif self.readRegister(REG_OP_MODE) != (MODE_LONG_RANGE_MODE | MODE_RX_SINGLE):
+            elif self.readRegister(REGOPMODE) != 0b10000110:
                 # no packet received.
                 # reset FIFO address / # enter single RX mode
-                self.writeRegister(REG_FIFO_ADDR_PTR, 0x00)
-                self.writeRegister(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_RX_SINGLE)
+                self.writeRegister(REGFIFOADDRPTR, 0x00)
+                self.writeRegister(REGOPMODE, 0b10000110)
         else:
             print("FSK PAYLOAD!")
             if self.onReceive:
@@ -796,34 +595,34 @@ class SX127x:
         if size > 0:
             self.writeRegister(REG_PAYLOAD_LENGTH, size & 0xFF)
 
-        # if (irqFlags & IRQ_RX_DONE_MASK) and \
-        # (irqFlags & IRQ_RX_TIME_OUT_MASK == 0) and \
-        # (irqFlags & IRQ_PAYLOAD_CRC_ERROR_MASK == 0):
+        # if (irqFlags & 0x40) and \
+        # (irqFlags & 0x80 == 0) and \
+        # (irqFlags & 0x20 == 0):
 
-        if (irqFlags == IRQ_RX_DONE_MASK):
+        if (irqFlags == 0x40):
             # RX_DONE only, irqFlags should be 0x40
             # automatically standby when RX_DONE
             return True
 
-        elif self.readRegister(REG_OP_MODE) != (MODE_LONG_RANGE_MODE | MODE_RX_SINGLE):
+        elif self.readRegister(REGOPMODE) != 0b10000110:
             # no packet received.
             # reset FIFO address / # enter single RX mode
-            self.writeRegister(REG_FIFO_ADDR_PTR, FifoRxBaseAddr)
-            self.writeRegister(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_RX_SINGLE)
+            self.writeRegister(REGFIFOADDRPTR, FifoRxBaseAddr)
+            self.writeRegister(REGOPMODE, 0b10000110)
 
     def readPayload(self):
         modem = self.getActiveModem()
         if modem == "LORA":
             # set FIFO address to current RX address
-            # fifo_rx_current_addr = self.readRegister(REG_FIFO_RX_CURRENT_ADDR)
-            self.writeRegister(REG_FIFO_ADDR_PTR, self.readRegister(REG_FIFO_RX_CURRENT_ADDR))
+            # fifo_rx_current_addr = self.readRegister(REGFIFORXCURRENTADDR)
+            self.writeRegister(REGFIFOADDRPTR, self.readRegister(REGFIFORXCURRENTADDR))
 
             # read packet length
             packet_length = 0
             if self.implicit_header_mode:
                 packet_length = self.readRegister(REG_PAYLOAD_LENGTH)
             else:
-                packet_length = self.readRegister(REG_RX_NB_BYTES)
+                packet_length = self.readRegister(REGRXNBBYTES)
         else:
             packet_length = 64
             
@@ -844,8 +643,8 @@ class SX127x:
         self.SetTransceiverMode('STDBY')
         #set treshold value
         Treshold = min(127, Treshold)
-        self.writeRegister(REG_FSK_RSSI_THRESH,Treshold*2)
-        print("detecting Treshold: ",self.readRegister(REG_FSK_RSSI_THRESH)/2," dbm")
+        self.writeRegister(REGFSKRSSITHRESH,Treshold*2)
+        print("detecting Treshold: ",self.readRegister(REGFSKRSSITHRESH)/2," dbm")
         #set Rx to RSSI Trigger
         self.FSK_SetRXTrigger(1)
         
@@ -854,16 +653,16 @@ class SX127x:
         #setting payload lenght = 0 in Fixed length automatically sets ContinuousMode On
         self.FSK_SetPayload_Lenght(0)
         #set DIO0 mapping 
-        self.writeRegister(REG_DIO_MAPPING_1, 0b00010000)
+        self.writeRegister(REGDIOMAPPING1, 0b00010000)
         #set Period of decrement of the RSSI to once every 8 chips
-        self.writeRegister(REG_OOK_DEMOD_AVERAGE, 0x72)
+        self.writeRegister(REGOOKAVG, 0x72)
         #Clear IRQ Flags
         #self.ClearIRQFlags()
         #if callback:
             #self.dio0.irq(trigger=Pin.IRQ_RISING, handler=self.handleOnReceive)
         #set bitrate to max
-        self.writeRegister(REG_BITRATE_MSB, 0x00)
-        self.writeRegister(REG_BITRATE_LSB, 0x0D)
+        self.writeRegister(REGBITRATEMSB, 0x00)
+        self.writeRegister(REGBITRATELSB, 0x0D)
 
         #set start rx
         self.SetTransceiverMode('RX')
@@ -878,8 +677,8 @@ class SX127x:
         dict[(0x03,0x41)] = 38.4
         dict[(0x01,0xA1)] = 76.8
         dict[(0x00,0x0D)] = 153.6
-        MSB = self.readRegister(REG_BITRATE_MSB)
-        LSB = self.readRegister(REG_BITRATE_LSB)        
+        MSB = self.readRegister(REGBITRATEMSB)
+        LSB = self.readRegister(REGBITRATELSB)        
         print("{} kbps".format(dict[(MSB,LSB)]))
     def writeRegister(self, address, value):
         self.transfer(address | 0x80, value)

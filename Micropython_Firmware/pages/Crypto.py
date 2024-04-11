@@ -47,10 +47,12 @@ def AutoGenerateKeyOnEmptySlot(lcd,eep):
             if ((slotdata == b'\x00'*32) or (slotdata == b'\xFF'*32)):
                 keyslot = i_slot+pag*8
                 SaveKeyToEEPROM(lcd,Generatekey(),keyslot,eep)
-                key = GetKeyFromEEPROM(lcd,keyslot,eep)
                 break
-        if key != None:
+        if keyslot != None:
             break
+    if keyslot == None:
+        keyslot = random.randint(0, 1023)
+    key = GetKeyFromEEPROM(lcd,keyslot,eep)
     return (key,keyslot)
 
 def EraseEEPROM(lcd,eep):
