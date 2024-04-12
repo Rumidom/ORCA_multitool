@@ -38,7 +38,7 @@ class Notepad(UserControl):
                 f = open(self.FilePath,"rb")
                 data = f.read()
                 f.close
-                self.LineList = Crypto.DecryptBytearraytoString(data,self.key,self.keyslot).splitlines(True)
+                self.LineList = Crypto.DecryptBytearraytoString(data,self.key).splitlines(True)
             else:
                 f = open(self.FilePath)
                 data = f.read()
@@ -144,7 +144,7 @@ class Notepad(UserControl):
                     self.FilePath = FileNdot[0] +"[({})]".format(self.keyslot)
                     if len(FileNdot) > 1:
                         self.FilePath+'.'+FileNdot[-1]
-                    data = Crypto.EncryptBytearray(data,self.key,self.keyslot)
+                    data = Crypto.EncryptBytearray(data,self.key)
             with open(self.FilePath, 'w') as f:
                 print("Saving to: ",self.FilePath)
                 f.write(data)

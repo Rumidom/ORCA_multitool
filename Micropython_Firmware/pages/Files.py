@@ -94,7 +94,9 @@ class FileExplorer(UserControl):
             return(None,None)
     
     def DEL_Func(self):
-        return("DELETE")
+        if self.Dir_Ans == "SD":
+            os.umount("/sd")
+        return(None,None)
     
     def DrawFileView(self):
         self.lcd.fill(0)

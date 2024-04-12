@@ -217,7 +217,7 @@ class SX127x:
     def SetRadioMode(self,Rmode):
         self.SetTransceiverMode('SLEEP')
         if self.RadioMode == "LORA":
-            self.writeRegister(REGOPMODE,self.readRegister(REGOPMODE) | (1<<7))
+            self.writeRegister(REGOPMODE,self.readRegister(REGOPMODE) | 0b10000000)
         elif self.RadioMode == "FSK":
             self.writeRegister(REGOPMODE,((self.readRegister(REGOPMODE) & 0b10011111)))
         elif self.RadioMode == "OOK":
