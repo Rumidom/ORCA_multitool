@@ -20,10 +20,11 @@ for i in range(7):
 AnimPathList.append("bitmaps/JMPORCA "+str(0)+".bmp")
 #print(AnimPathList)
 
+
 for path in AnimPathList:
     lcd.fill(0)
     UI.DrawBitmap(path,25,15,lcd.fbuf)
-    fontlib.printstring("ORCA MULTITOOL",0,10,1,lcd.fbuf,font = "futuristic")
+    fontlib.prt("ORCA MULTITOOL",0,10,1,lcd.fbuf,UI.futuristic_font)
     lcd.show()
     time.sleep_ms(150)
     
@@ -57,7 +58,7 @@ Lora_NSS.on()
 
 lcd.fill(0)
 uart1.init()
-#fontlib.printstring("ORCA MULTITOOL",0,10,1,lcd,font = "futuristic")
+#fontlib.prt("ORCA MULTITOOL",0,10,1,lcd,font = "futuristic")
 
 #RunKeyViewer()
 

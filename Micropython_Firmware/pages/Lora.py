@@ -1,6 +1,5 @@
 import UI,Popups
 from Control import UserControl
-import fontlib
 import utime
 import Crypto
 

@@ -176,7 +176,7 @@ class Notepad(UserControl):
             if Line != '':
                 if Line[-1] == "\n":
                     Line = Line[:-1]
-            fontlib.printstring(Line[self.WindowPos_x:self.WindowPos_x+self.screen_maxchars],3,7*i,0,self.lcd.fbuf,invert = False)   
+            fontlib.prt(Line[self.WindowPos_x:self.WindowPos_x+self.screen_maxchars],3,7*i,0,self.lcd.fbuf,UI.five_font,invert = False)   
         self.lcd.show()
         
     def Run(self):

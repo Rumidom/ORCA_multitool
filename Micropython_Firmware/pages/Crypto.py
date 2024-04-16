@@ -61,8 +61,8 @@ def EraseEEPROM(lcd,eep):
     pages = len(eep)/pagesize
     for i in range(pages):
         lcd.fill(0)
-        fontlib.printstring("Erasing EEPROM",8,15,0,lcd.fbuf)
-        fontlib.printstring('{:.2f} %'.format(((i+1)/pages)*100),25,25,0,lcd.fbuf)
+        fontlib.prt("Erasing EEPROM",8,15,0,lcd.fbuf,UI.five_font)
+        fontlib.prt('{:.2f} %'.format(((i+1)/pages)*100),25,25,0,lcd.fbuf,UI.five_font)
         eep[i*pagesize:(i+1)*pagesize] = b'\x00'*pagesize
         lcd.show()
 
@@ -152,7 +152,7 @@ class KeyWindow(UserControl):
             for j in range(5):
                 bindex = (i+7*j)
                 if bindex < 32:
-                    fontlib.printstring(hexdata[bindex*2:bindex*2+2],i*12+1,j*7,0,self.lcd.fbuf)
+                    fontlib.prt(hexdata[bindex*2:bindex*2+2],i*12+1,j*7,0,self.lcd.fbuf,UI.five_font)
         UI.BottomMenu(self.lcd,self.Menubuttons,self.selected_index,MenuActive = True)
         self.lcd.show()
         
@@ -181,8 +181,8 @@ class KeysBrowser(UserControl):
         self.lcd.rect(posx, posy, 33, 11, 1)
         self.lcd.line(posx+6, posy, posx+6, posy+10, 1)
         if not empty:
-            fontlib.printchar("+",posx+1,posy+2,self.lcd.fbuf,font = "icons",invert = False)
-        fontlib.printstring(f'{slot:04}',posx+8,posy+3,1,self.lcd.fbuf,invert = selected)
+            fontlib.prt("+",posx+1,posy+2,self.lcd.fbuf,,UI.icons_font,invert = False)
+        fontlib.prt(f'{slot:04}',posx+8,posy+3,1,self.lcd.fbuf,UI.five_font,invert = selected)
         self.lcd.line(posx+7, posy+1, posx+8+23, posy+1, 1)
         self.lcd.line(posx+7, posy+9, posx+8+23, posy+9, 1)
         
@@ -199,8 +199,8 @@ class KeysBrowser(UserControl):
                 if (slot_index == self.Selectedindex):
                     selected_slot = True
                 self.DrawKeySlot(34*j,12*i,selected = selected_slot,empty = empty_slot,slot=slot_index+self.pag*8)
-        fontlib.printstring(f'P.',69,33,0,self.lcd.fbuf,invert = False)
-        fontlib.printstring(f'{self.pag:03}',69,39,0,self.lcd.fbuf,invert = False)
+        fontlib.prt(f'P.',69,33,0,self.lcd.fbuf,UI.five_font,invert = False)
+        fontlib.prt(f'{self.pag:03}',69,39,0,self.lcd.fbuf,UI.five_font,invert = False)
         self.lcd.show()
         
     def Ok_Func(self):

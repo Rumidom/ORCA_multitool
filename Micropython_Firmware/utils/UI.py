@@ -3,6 +3,12 @@ import math
 import Helpers
 import time
 
+futuristic_font = fontlib.font("fonts/futuristic (5,7).bmp")
+five_font = fontlib.font("fonts/five (5,5).bmp")
+icons_font = fontlib.font("fonts/icons (5,7).bmp")
+#cellphone_font = fontlib.font("fonts/cellphone (5,7).bmp")
+#oldschool_font = fontlib.font("fonts/oldschool (5,7).bmp")
+
 def BottomMenu(lcd,buttons,indexpos,MenuActive = True):
     Pairs = []
     for i in range(0,len(buttons),2):
@@ -17,9 +23,9 @@ def BottomMenu(lcd,buttons,indexpos,MenuActive = True):
             DrawButton(lcd,6+37*i,38,Pairs[pair_choice][i],selected = ((indexpos ==  pair_choice*2+i) and MenuActive))
     
     if indexpos < 2:
-        fontlib.printstring("?",80,39,0,lcd.fbuf,font="icons")
+        fontlib.prt("?",80,39,0,lcd.fbuf,icons_font)
     else:
-        fontlib.printstring(";",0,39,0,lcd.fbuf,font="icons")
+        fontlib.prt(";",0,39,0,lcd.fbuf,icons_font)
 
 def DrawIconIndexMenuOption(lcd,iy,Index,text,icon=" ",posx=3,selected = False):
     DrawMenuOption(lcd,iy,str(Index),selected = False)
@@ -28,17 +34,17 @@ def DrawIconIndexMenuOption(lcd,iy,Index,text,icon=" ",posx=3,selected = False):
     DrawIconMenuOption(lcd,iy,text,icon=icon,posx=5+5*math.ceil(math.log(Index+1, 10)),selected = selected)
             
 def DrawIconMenuOption(lcd,iy,text,icon=" ",posx=3,selected = False):
-    fontlib.printstring(text,posx+8,iy*9+1,0,lcd.fbuf,font = "five",invert = selected)
-    fontlib.printstring(icon,posx,iy*9,0,lcd.fbuf,font = "icons",invert = False)
+    fontlib.prt(text,posx+8,iy*9+1,0,lcd.fbuf,five_font,invert = selected)
+    fontlib.prt(icon,posx,iy*9,0,lcd.fbuf,icons_font,invert = False)
 
 def DrawMenuOption(lcd,iy,text,posx=3,selected = False):
-    fontlib.printstring(text,posx,iy*9+1,0,lcd.fbuf,font = "five",invert = selected)
+    fontlib.prt(text,posx,iy*9+1,0,lcd.fbuf,five_font,invert = selected)
 
 def DrawButton(lcd,posx,posy,text,selected = False):
     lcd.rect(posx, posy, 36, 9, 1)
     halftextwidth = (len(text)*5)//2
     centered_posx = posx+18-halftextwidth
-    fontlib.printstring(text,centered_posx,posy+2,0,lcd.fbuf,invert = selected)
+    fontlib.prt(text,centered_posx,posy+2,0,lcd.fbuf,five_font,invert = selected)
     if selected:
         lcd.rect(posx+1, posy, 34, 9, 1)
         if len(text) <= 5:
@@ -48,11 +54,11 @@ def DrawButton(lcd,posx,posy,text,selected = False):
 def DrawMenuCheckBox(lcd,yi,text,selected = False,checked = False):
     if len(text) < 13:
         text = text + " " * (13 - len(text))
-    fontlib.printstring(text,3,(10*yi)+2,0,lcd.fbuf,font = "five",invert = selected)
+    fontlib.prt(text,3,(10*yi)+2,0,lcd.fbuf,five_font,invert = selected)
     if checked:
-        fontlib.printstring("_`a",68,10*yi+1,0,lcd.fbuf,font = "icons")
+        fontlib.prt("_`a",68,10*yi+1,0,lcd.fbuf,icons_font)
     else:
-        fontlib.printstring("_^a",68,10*yi+1,0,lcd.fbuf,font = "icons")
+        fontlib.prt("_^a",68,10*yi+1,0,lcd.fbuf,icons_font)
 
 def DrawMenuScrollOptions(lcd,yi,text,options,index,selected=False,change = False):
     op_text = options[index]
@@ -63,23 +69,23 @@ def DrawMenuScrollOptions(lcd,yi,text,options,index,selected=False,change = Fals
 
     if len(text) < 7:
         text = text + " " * (7 - len(text))
-    fontlib.printstring(text,3,(10*yi)+2,0,lcd.fbuf,font = "five",invert = selected)
+    fontlib.prt(text,3,(10*yi)+2,0,lcd.fbuf,five_font,invert = selected)
     DrawButton(lcd,44,10*yi,op_text,selected = change)
     if index == 0:
-        fontlib.printstring("?",80,10*yi+1,0,lcd.fbuf,font="icons")
+        fontlib.prt("?",80,10*yi+1,0,lcd.fbuf,icons_font)
     elif index == (len(options)-1):
-        fontlib.printstring(";",39,10*yi+1,0,lcd.fbuf,font="icons")
+        fontlib.prt(";",39,10*yi+1,0,lcd.fbuf,icons_font)
     else:
-        fontlib.printstring(";",39,10*yi+1,0,lcd.fbuf,font="icons")
-        fontlib.printstring("?",80,10*yi+1,0,lcd.fbuf,font="icons")
+        fontlib.prt(";",39,10*yi+1,0,lcd.fbuf,icons_font)
+        fontlib.prt("?",80,10*yi+1,0,lcd.fbuf,icons_font)
         
 def DrawMenuNumberInput(lcd,yi,text,num = "",selected=False,change = False):
     if len(num) < 4:
         num = "_" * (4 - len(num)) + num
     if len(num) < 7:
         text = text + "_" * (4 - len(text))
-    fontlib.printstring(text,3,(10*yi)+2,0,lcd.fbuf,font = "five",invert = selected)
-    fontlib.printstring(num,62,(10*yi)+2,0,lcd.fbuf,font = "five",invert = change)
+    fontlib.prt(text,3,(10*yi)+2,0,lcd.fbuf,five_font,invert = selected)
+    fontlib.prt(num,62,(10*yi)+2,0,lcd.fbuf,five_font,invert = change)
 
 def DrawScrollBar(lcd,posx,posy,index,lineslen,ScreenMaxLines=4,Bartotal = 64):
 
@@ -96,7 +102,7 @@ def DrawScrollBar(lcd,posx,posy,index,lineslen,ScreenMaxLines=4,Bartotal = 64):
         lcd.rect(posx, posy, Bartotal, 4, 1)
         
 def Cursor(lcd,xi,yi,charwidth = 5,lineheight=7,spce=0,selected = False):
-    fontlib.printstring("|",(charwidth+spce)*xi+1,(lineheight*yi),0,lcd.fbuf,invert = selected)
+    fontlib.prt("|",(charwidth+spce)*xi+1,(lineheight*yi),0,lcd.fbuf,five_font,invert = selected)
     
 def PrintWrapedText(lcd,text_string,xi,yi,Screen_Width=84,charwidth = 5,lineheight=7,spce=0):
     Max_char = int(Screen_Width//charwidth)
@@ -111,7 +117,7 @@ def PrintWrapedText(lcd,text_string,xi,yi,Screen_Width=84,charwidth = 5,lineheig
         lines.append(current_line)
     for i,line in enumerate(lines):
         #lcd.text(line, 0, i*10, 1)
-        fontlib.printstring(line,(charwidth+spce)*xi+1,(lineheight*yi),0,lcd,font = "five")
+        fontlib.prt(line,(charwidth+spce)*xi+1,(lineheight*yi),0,lcd,five_font)
 
 def DrawPacketWindow(lcd,Packetdata,PacketRSSI,PacketNum,lineindex,decode=False,MaxLines = 5):
     hexdata = Packetdata.hex()
@@ -119,15 +125,15 @@ def DrawPacketWindow(lcd,Packetdata,PacketRSSI,PacketNum,lineindex,decode=False,
     bytesPerLine = 7
     bytesnum = len(hexdata)//2
     linesnum = bytesnum//bytesPerLine
-    fontlib.printstring("S:"+str(bytesnum)+" RSSI:"+str(PacketRSSI),3,0,0,lcd.fbuf)
+    fontlib.prt("S:"+str(bytesnum)+" RSSI:"+str(PacketRSSI),3,0,0,lcd.fbuf,five_font)
     for i in range(bytesPerLine):
         for j in range(lineindex,MaxLines+lineindex):
             bindex = (i+bytesPerLine*j)
             if bindex*2+2 <= len(hexdata):
                 if decode:
-                    fontlib.printstring(decodeddata[bindex],i*12+1,j*7+7-lineindex*7,0,lcd.fbuf)                
+                    fontlib.prt(decodeddata[bindex],i*12+1,j*7+7-lineindex*7,0,lcd.fbuf,five_font)                
                 else:
-                    fontlib.printstring(hexdata[bindex*2:bindex*2+2],i*12+1,j*7+7-lineindex*7,0,lcd.fbuf)
+                    fontlib.prt(hexdata[bindex*2:bindex*2+2],i*12+1,j*7+7-lineindex*7,0,lcd.fbuf,five_font)
     DrawScrollBar(lcd,10,42,lineindex+4,linesnum,ScreenMaxLines=5)
     
 def DrawPacketMonitor(lcd,PacketList,PacketIndex,Pindex,scroll,MaxCharsPerLine=14):
@@ -153,7 +159,7 @@ def DrawBitmap(path,x,y,fbuf):
     filebytes = bytearray(file.read())
     file.close()
     bmptag = filebytes[0:2]
-    dataOffset = int.from_bytes(filebytes[10:13],"little")
+    dataOffset = int.from_bytes(filebytes[10:14],"little")
     size = (int.from_bytes(filebytes[18:22],"little"),int.from_bytes(filebytes[22:26],"little"))
     formt = int.from_bytes(filebytes[28:30],"little")
     #print("file:{} bmptag:{} formt:{} size:{}".format(path,bmptag,formt,size))
