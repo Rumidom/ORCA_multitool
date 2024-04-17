@@ -1,4 +1,5 @@
 import fontlib
+import UI
 from Control import UserControl
 
 class Menu(UserControl):
@@ -42,10 +43,7 @@ class Menu(UserControl):
             self.SelectedIndex = (self.maxrows-1)
             
         for i,item in enumerate(self.MenuOptions[self.menupos:self.maxrows+self.menupos]):
-            if i == self.SelectedIndex:
-                fontlib.printstring(item,3,i*7,0,self.lcd.fbuf,font = "five",invert = True)
-            else:
-                fontlib.printstring(item,3,i*7,0,self.lcd.fbuf,font = "five")
+            fontlib.prt(item,3,i*7,0,self.lcd.fbuf,UI.five_font,invert = (i == self.SelectedIndex))
         self.lcd.show()
     
     def Run(self):

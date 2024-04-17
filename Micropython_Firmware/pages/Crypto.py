@@ -181,7 +181,7 @@ class KeysBrowser(UserControl):
         self.lcd.rect(posx, posy, 33, 11, 1)
         self.lcd.line(posx+6, posy, posx+6, posy+10, 1)
         if not empty:
-            fontlib.prt("+",posx+1,posy+2,self.lcd.fbuf,,UI.icons_font,invert = False)
+            fontlib.prt("+",posx+1,posy+2,self.lcd.fbuf,UI.icons_font,invert = False)
         fontlib.prt(f'{slot:04}',posx+8,posy+3,1,self.lcd.fbuf,UI.five_font,invert = selected)
         self.lcd.line(posx+7, posy+1, posx+8+23, posy+1, 1)
         self.lcd.line(posx+7, posy+9, posx+8+23, posy+9, 1)

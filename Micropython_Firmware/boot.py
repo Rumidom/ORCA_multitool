@@ -11,6 +11,7 @@ File_structure = {"/lib":["bdevice.py","eeprom_i2c.py","pcd8544.py","sx127x.py",
                   "/utils":["UI.py","Popups.py","Control.py","Helpers.py"],
                   "/files":[],
                   "/sd":[],
+                  "/fonts":["icons (5,7).bmp","five (5,5).bmp","futuristic (5,7).bmp"],
                   "/bitmaps":["JMPORCA 0.bmp","JMPORCA 1.bmp","JMPORCA 2.bmp","JMPORCA 3.bmp",
                               "JMPORCA 4.bmp","JMPORCA 5.bmp","JMPORCA 6.bmp","JMPORCA 7.bmp",
                               "ANTENNA.bmp"]
