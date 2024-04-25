@@ -3,7 +3,7 @@ import Crypto,Config
 import Popups,UI
 import fontlib
 from Control import UserControl
-
+import Helpers
 class Notepad(UserControl):
     def __init__(self,lcd,uart_,sd,i2c,FilePath = None):
         self.eep = Crypto.Geteep(lcd,i2c)
@@ -154,8 +154,13 @@ class Notepad(UserControl):
         return("DELETE")
         
     def Input_Func(self,w):
+        
         if (w > b'\x0f') and (w != b'\x7f'):
-            dcode = w.decode("utf-8")
+            dcode = Helpers.ASCII_Decode(w)
+            try:
+                dcode = w.decode("utf-8")
+            except Exception as e:
+                print("Invalid unicode:",w)
             if dcode:
                 line = self.LineList[self.cursorLine]
                 self.lenList[self.cursorLine] += 1

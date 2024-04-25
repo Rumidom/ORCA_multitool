@@ -105,18 +105,38 @@ def DrawPixels(xpos,ypos,charbytes,charsize,fbuf,invert=False):
                 ypos += 1
             
 def printchar(letter,xpos,ypos,fbuf,font,invert = False,charwidth=None):
+    Schar_dict = {231: (None, 67, 167), 199: (None, 35, 167), 225: (201, 65, None), 233: (201, 69, None),
+                  237: (201, 73, None), 243: (201, 79, None), 250: (201, 85, None), 193: (201, 33, None),
+                  201: (201, 37, None), 205: (201, 41, None), 211: (201, 47, None), 218: (201, 53, None),
+                  226: (194, 194, None), 234: (194, 202, None), 244: (194, 79, None), 227: (194, 65, None),
+                  245: (94, 79, None), 194: (194, 162, None), 202: (194, 170, None), 212: (194, 47, None),
+                  195: (194, 33, None), 213: (94, 47, None)} # Special characters with accentuation
     if charwidth == None:
         charwidth = font.size[0]
     origin = xpos
-    
+    addontopval = None
+    addbelowval = None
     charval = ord(letter)
-    if charval > 127: #Todo support for portuguese special characters
+    if charval > 165: #Todo support for portuguese special characters
         charval = 0x3f
+    elif charval in Schar_dict:
+        charval = Schar_dict[charval][1]
+        addontopval = Schar_dict[charval][0]
+        addbelowval = Schar_dict[charval][2]
+    else:
+        charval = 0x3f
+        
     index = charval-32 #start code, 32 or space
     character = font.getchar(index)
-
     DrawPixels(xpos,ypos,character,font.size,fbuf,invert=invert)
-
+    if addontopval:
+        addontop = font.getchar(index)
+        DrawPixels(xpos,ypos-font.size[1],addontop,font.size,fbuf,invert=invert)
+    if addbelowval:
+        addontop = font.getchar(index)
+        DrawPixels(xpos,ypos+font.size[1],addontop,font.size,fbuf,invert=invert)
+        
+    
 def prt(string,xpos,ypos,spce,fbuf,font,invert=False):
     char_size = font.size
     if invert:
